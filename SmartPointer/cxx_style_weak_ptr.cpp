@@ -50,9 +50,9 @@ public:
 // A impl
 A::~A()
 {
-#if defined(MY_WEAK_PTR)
     std::cout << "destructor A" << std::endl;
 
+#if defined(MY_WEAK_PTR)
     if (mBPtr.expired())
     {
         std::cout << "B is expired in ~A()." << std::endl;
