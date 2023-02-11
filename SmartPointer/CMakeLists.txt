@@ -1,0 +1,9 @@
+cmake_minimum_required(VERSION 3.14.6)
+
+include(../create_object_test_case.cmake)
+
+make_test_case_create_object(CO_CXX_STYLE_UNIQUE_PTR ./cxx_style_unique_ptr.cpp)
+make_test_case_create_object(CO_CXX_STYLE_SHARED_PTR ./cxx_style_shared_ptr.cpp)
+make_test_case_create_object(CO_CXX_STYLE_VOID_SHARED_PTR ./cxx_style_void_shared_ptr.cpp)
+make_test_case_create_object(CO_CXX_STYLE_ENABLE_SHARED_FROM_THIS ./cxx_style_enable_shared_from_this.cpp)
+make_test_case_create_object(CO_CXX_STYLE_WEAK_PTR ./cxx_style_weak_ptr.cpp)

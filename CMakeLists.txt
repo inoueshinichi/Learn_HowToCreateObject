@@ -71,3 +71,4 @@ message(STATUS "========== [END] C++ All Target Options ==========")
 # Subdirectory
 ###############################################################################
 add_subdirectory(NativeAllocate)
+add_subdirectory(SmartPointer)
