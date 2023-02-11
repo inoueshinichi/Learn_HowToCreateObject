@@ -26,7 +26,7 @@ class A
 {
 public:
 #if defined(MY_WEAK_PTR)
-    std::weak_ptr<B> mBPtr;
+    std::weak_ptr<B> mBPtr; // 循環参照を回避する
 #else
     std::shared_ptr<B> mBPtr;
 #endif
