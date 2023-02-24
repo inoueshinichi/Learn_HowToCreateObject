@@ -76,4 +76,5 @@ project(HowToCreateObject LANGUAGES CXX VERSION 0.1.0)
 ###############################################################################
 add_subdirectory(NativeAllocate)
 add_subdirectory(SmartPointer)
-add_subdirectory(ObjectFactory)
+add_subdirectory(InterfacePattern)
+add_subdirectory(RawPtrEnumFactory)
