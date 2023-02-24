@@ -1,5 +1,5 @@
 /**
- * @file cxx_style_shared_ptr_from_this.cpp
+ * @file sp_shared_ptr_from_this.cpp
  * @author your name (you@domain.com)
  * @brief 
  * @version 0.1

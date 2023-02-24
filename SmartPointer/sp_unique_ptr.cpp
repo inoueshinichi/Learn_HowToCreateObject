@@ -1,5 +1,5 @@
 /**
- * @file cxx_style_unique_ptr.cpp
+ * @file sp_unique_ptr.cpp
  * @author your name (you@domain.com)
  * @brief 
  * @version 0.1

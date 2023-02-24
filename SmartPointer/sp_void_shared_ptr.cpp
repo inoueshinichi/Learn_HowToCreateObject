@@ -1,5 +1,5 @@
 /**
- * @file cxx_style_void_shared_ptr.cpp
+ * @file sp_void_shared_ptr.cpp
  * @author your name (you@domain.com)
  * @brief 
  * @version 0.1

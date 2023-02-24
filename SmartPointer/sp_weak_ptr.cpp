@@ -1,5 +1,5 @@
 /**
- * @file cxx_style_weak_ptr.cpp
+ * @file sp_weak_ptr.cpp
  * @author your name (you@domain.com)
  * @brief 
  * @version 0.1
