@@ -62,12 +62,24 @@ function(make_is_test_case BUILD_TARGET BUILD_CPP_OPENMP BUILD_CPP_MSVC_STATIC_R
         $<$<AND:$<CXX_COMPILER_ID:MSVC>,$<CONFIG:RelWithDebgInfo>>:/Od /Zi /RTC1>
 
         # GNU, Clang, AppleClang
-        $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:-Wall -pedantic>
+        $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:-Wall>
         $<$<AND:$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>,$<CONFIG:Release>>:-O3>
         $<$<AND:$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>,$<CONFIG:Debug>>:-O0 -g>
         $<$<AND:$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>,$<CONFIG:MinSizeRel>>:-Os>
         $<$<AND:$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>,$<CONFIG:RelWithDebgInfo>>:-O2 -g>
     )
+
+    # Output Preprocessor(*.ii) & Assembler(*.s)
+    option(BUILD_CPP_OUTPUT_PREPROCESS ON)
+    if(ON)
+        # message(STATUS "Output preprocessed files....")
+        target_compile_options(${BUILD_TARGET} PRIVATE
+            $<$<CXX_COMPILER_ID:MSVC>:/FA>
+            $<$<CXX_COMPILER_ID:GNU>:-save-temps=obj>
+            $<$<CXX_COMPILER_ID:Clang>:-save-temps=obj>
+            $<$<CXX_COMPILER_ID:AppleClang>:-save-temps=obj>
+        )
+    endif()
 
     # OpenMP
     if(${BUILD_CPP_OPENMP})
