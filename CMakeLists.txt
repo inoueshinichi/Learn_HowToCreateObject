@@ -21,19 +21,46 @@ endif()
 ###############################################################################
 # Device Check
 ###############################################################################
-# Platform
+# Platform & Processor
+set(HOST_ARCH "")
+if (UNIX)
+    execute_process(COMMAND uname -m OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE HOST_ARCH) # OUTPUT_STRIP_TRAILING_WHITESPACE : 改行を省く
+    if(${HOST_ARCH} STREQUAL "")
+        execute_process(COMMAND uname -p OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE HOST_ARCH)
+    endif()
+    if(${HOST_ARCH} STREQUAL "")
+        message(FATAL_ERROR "Not found architecture symbol in Unix.")
+    endif()
+endif()
+
 if(WIN32)
     message(STATUS "Platform: Windows ${CMAKE_SYSTEM_VERSION}")
+    set(HOST_ARCH $ENV{PROCESSOR_ARCHITECTURE})
+    if(${HOST_ARCH} STREQUAL "")
+        message(FATAL_ERROR "Not found architecture symbol in Windows.")
+    endif()
+elseif(UNIX AND NOT APPLE)
+    message(STATUS "Platform: Linux ${CMAKE_SYSTEM_VERSION}")
 elseif(APPLE)
     message(STATUS "Platform: macOS ${CMAKE_SYSTEM_VERSION}")
-elseif(UNIX AND NOT APPLE) # Linux
-    message(STATUS "Platform: Linux ${CMAKE_SYSTEM_VERSION}")
 else()
     message(FATAL_ERROR "Platform: Not match platforms [Windows, macOS, Linux]. Given platform is ${CMAKE_SYSTEM_NAME}")
 endif()
 
-# Processor
-message(STATUS "Processor: ${CMAKE_SYSTEM_PROCESSOR}")
+if(APPLE)
+    set(OSX_ARCHITECTURE "")
+    if(${HOST_ARCH} MATCHES "arm64")
+        list(APPEND OSX_ARCHITECTURE "AppleSilicon")
+    elseif(${HOST_ARCH} MATCHES "x86_64")
+        list(APPEND OSX_ARCHITECTURE "Intel(Rosetta2)")
+    else()
+        message(FATAL_ERROR "Not match architecture. Arch must arm64 or x86_64 in macOS. Given is ${ARCH}")
+    endif()
+    message(STATUS "Your macOS cpu architecture is ${HOST_ARCH} ${OSX_ARCHITECTURE}!")
+endif()
+message(STATUS "Host arch: ${HOST_ARCH}")
+message(STATUS "CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR}") # コンパイル対象のプロセッサ
+message(STATUS "CMAKE_HOST_SYSTEM_PROCESSOR: ${CMAKE_HOST_SYSTEM_PROCESSOR}") # 実行しているプロセッサ
 
 # Generator
 # https://cmake.org/cmake/help/latest/manual/cmake-generators.7.html
@@ -44,31 +71,9 @@ message(STATUS "Generator: ${CMAKE_GENERATOR}")
 ###############################################################################
 project(HowToCreateObject LANGUAGES CXX VERSION 0.1.0)
 
-# ライブラリフラグ
-set(CMAKE_RELEASE_POSTFIX "")
-set(CMAKE_DEBUG_POSTFIX d)
-set(CMAKE_MINSIZEREL_POSTFIX s)
-set(CMAKE_RELWITHDEBINFO_POSTFIX rd)
-
-# C++17
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-message(STATUS "CMAKE_CXX_STANDARD: ${CMAKE_CXX_STANDARD}")
-
-message(STATUS "---------- Compiler options ----------")
-message(STATUS ">>>>> C++ version: ${CMAKE_CXX_STANDARD}")
-message(STATUS ">>>>> C++ compiler id: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
-message(STATUS ">>>>> C++ compiler path: ${CMAKE_CXX_COMPILER}")
-message(STATUS ">>>>> C++ compiler `Common` flags: ${CMAKE_CXX_FLAGS}")
-message(STATUS ">>>>> C++ compiler `Debug` flags: ${CMAKE_CXX_FLAGS_DEBUG}")
-message(STATUS ">>>>> C++ compiler `Release` flags: ${CMAKE_CXX_FLAGS_RELEASE}")
-message(STATUS ">>>>> C++ compiler `Minsizerel` flags: ${CMAKE_CXX_FLAGS_MINSIZEREL}")
-message(STATUS ">>>>> C++ compiler `Relwithdebinfo` flags: ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
-
-message(STATUS "========== [END] C++ All Target Options ==========")
-
 ###############################################################################
 # Subdirectory
 ###############################################################################
 add_subdirectory(NativeAllocate)
 add_subdirectory(SmartPointer)
+add_subdirectory(ObjectFactory)

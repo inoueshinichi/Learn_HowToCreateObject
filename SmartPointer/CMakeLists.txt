@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.14.6)
 
-include(../create_object_test_case.cmake)
+include(../is_test_case.cmake)
 
-make_test_case_create_object(CO_CXX_STYLE_UNIQUE_PTR ./cxx_style_unique_ptr.cpp)
-make_test_case_create_object(CO_CXX_STYLE_SHARED_PTR ./cxx_style_shared_ptr.cpp)
-make_test_case_create_object(CO_CXX_STYLE_VOID_SHARED_PTR ./cxx_style_void_shared_ptr.cpp)
-make_test_case_create_object(CO_CXX_STYLE_ENABLE_SHARED_FROM_THIS ./cxx_style_enable_shared_from_this.cpp)
-make_test_case_create_object(CO_CXX_STYLE_WEAK_PTR ./cxx_style_weak_ptr.cpp)
+make_is_test_case(CO_SP_UNIQUE_PTR ON OFF "" "./sp_unique_ptr.cpp")
+make_is_test_case(CO_SP_SHARED_PTR ON OFF "" "./sp_shared_ptr.cpp")
+make_is_test_case(CO_SP_VOID_SHARED_PTR ON OFF "" "./sp_void_shared_ptr.cpp")
+make_is_test_case(CO_SP_ENABLE_SHARED_FROM_THIS ON OFF "" "./sp_enable_shared_from_this.cpp")
+make_is_test_case(CO_SP_WEAK_PTR ON OFF "" "./sp_weak_ptr.cpp")
