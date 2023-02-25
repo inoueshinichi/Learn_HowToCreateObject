@@ -18,10 +18,8 @@ set(BUILD_SOURCES "")
 list(APPEND BUILD_SOURCES ${INTERFACE_SOURCES})
 list(APPEND BUILD_SOURCES ${OBJECT_SOURCES})
 
-list(APPEND BUILD_SOURCES "test_interface_exe.cpp")
-
 include_directories("../Interface")
 include_directories("../Object")
 
-make_is_test_case(INTERFACE_PATTERN ON OFF "${BUILD_HEADERS}" "${BUILD_SOURCES}")
+make_is_test_case("${BUILD_HEADERS}" "${BUILD_SOURCES}" ./test_interface_exe.cpp)
 

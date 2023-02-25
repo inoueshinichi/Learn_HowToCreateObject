@@ -1,13 +1,16 @@
 cmake_minimum_required(VERSION 3.14.6)
 
 
-function(make_is_test_case BUILD_TARGET BUILD_CPP_OPENMP BUILD_CPP_MSVC_STATIC_RUNTIME BUILD_HEADERS BUILD_SOURCES)
+function(make_is_test_case BUILD_HEADERS BUILD_SOURCES BUILD_EXE_SOURCE)
+
+    # Target
+    get_filename_component(BUILD_TARGET ${BUILD_EXE_SOURCE} NAME_WE)
 
     # Project
     project(${BUILD_TARGET} LANGUAGES CXX VERSION 0.1.0)
 
     # Exe
-    add_executable(${BUILD_TARGET})
+    add_executable(${BUILD_TARGET} ${BUILD_EXE_SOURCE})
 
     # Headers & Sources
     target_sources(${BUILD_TARGET} PRIVATE ${BUILD_HEADERS} PRIVATE ${BUILD_SOURCES})
@@ -70,7 +73,6 @@ function(make_is_test_case BUILD_TARGET BUILD_CPP_OPENMP BUILD_CPP_MSVC_STATIC_R
     )
 
     # Output Preprocessor(*.ii) & Assembler(*.s)
-    option(BUILD_CPP_OUTPUT_PREPROCESS ON)
     if(ON)
         # message(STATUS "Output preprocessed files....")
         target_compile_options(${BUILD_TARGET} PRIVATE
@@ -82,14 +84,7 @@ function(make_is_test_case BUILD_TARGET BUILD_CPP_OPENMP BUILD_CPP_MSVC_STATIC_R
     endif()
 
     # OpenMP
-    if(${BUILD_CPP_OPENMP})
-        # OpenMPはGeneratorExpressionに対応していないっぽい
-        
-        # target_compile_options(${BUILD_TARGET} PRIVATE
-        #     $<$<CXX_COMPILER_ID:MSVC>:/openmp>
-        #     $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:-fopenmp -lomp>
-        #     $<$<CXX_COMPILER_ID:AppleClang>:-Xpreprocessor> # AppleClang with XCode
-        # )
+    if(ON)
         if(NOT APPLE)
             find_package(OpenMP REQUIRED)
             target_compile_options(${BUILD_TARGET} PRIVATE
@@ -97,6 +92,7 @@ function(make_is_test_case BUILD_TARGET BUILD_CPP_OPENMP BUILD_CPP_MSVC_STATIC_R
                 $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>:-fopenmp>
             )
         else()
+            # macOSのOpenMPはGeneratorExpressionに対応していないバグがある.
             # macOSのAppleClangの場合CMakeのfildpakageスクリプトの動作にバグがありそうなので, Homebrewでインストールして直接指定.
             # https://zv-louis.hatenablog.com/entry/2018/12/23/141327
             execute_process(COMMAND brew --prefix libomp OUTPUT_VARIABLE OPENMP_HOME OUTPUT_STRIP_TRAILING_WHITESPACE)
@@ -137,4 +133,26 @@ function(make_is_test_case BUILD_TARGET BUILD_CPP_OPENMP BUILD_CPP_MSVC_STATIC_R
             )
         endif()
     endif()
+
+    #################
+    # Debug utility #
+    #################
+    # message(STATUS "Output preprocessed files....")
+    target_compile_options(${BUILD_TARGET} PRIVATE
+        # $<$<CXX_COMPILER_ID:MSVC>:>
+        $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:-Wshadow> # シャドウイングの警告
+        $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:-Wconversion> # 暗黙の型変換の警告
+        $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:-Wfloat-equal> # 実数値の等号比較を警告
+        $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:-ftrapv> # オーバーフロー検出(検出すると即座にプログラム停止)
+        $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:-fstack-protector-all> # スタック領域の範囲外書き込みの検出
+        # $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:-fsanitize=address> # 不正メモリ操作の検出
+        # $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:-fsanitize=undefined> # 未定義動作の検出
+        # $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:-fno-omit-frame-pointer> # 有効なスタックトレースの抽出
+        # $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:-ggdb> # GDB向けのデバッグ情報を埋め込む
+        # $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:-fverbose-asm> # アセンブリコードにソースコード情報を埋め込む
+        # $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:>
+        # $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:>
+        # $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:>
+    )
+
 endfunction()
