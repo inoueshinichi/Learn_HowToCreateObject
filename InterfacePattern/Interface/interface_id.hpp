@@ -23,8 +23,10 @@ enum class IID
     case (IID::interface_id):                                                    \
     {                                                                            \
         std::shared_ptr<interface_class> pointer;                                \
-        pointer = std::static_pointer_cast<interface_class>(std::enable_shared_from_this<class_name>::shared_from_this()); \
-        std::cout << #interface_class << " use_count: " << pointer.use_count() << std::endl; \
+        pointer = std::static_pointer_cast<interface_class>(                     \
+            std::static_pointer_cast<class_name>(shared_from_this()));           \
+        std::cout << #interface_class << " use_count: " << pointer.use_count()   \
+                << std::endl;                                                    \
         return std::static_pointer_cast<IUnknown>(pointer);                      \
     }                                                                            \
     break;
@@ -35,10 +37,7 @@ enum class IID
         switch (iid)                                                   \
         {
 
-#define QUERYINTERFACE_END                    \
-        }                                     \
-        return std::make_shared<IUnknown>();  \
+#define QUERYINTERFACE_END                  \
+        }                                   \
+        return std::shared_ptr<IUnknown>(); \
     }
-
-
-
