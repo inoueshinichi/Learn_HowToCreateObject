@@ -23,6 +23,7 @@ public:
 
     static const char *GetClassName() { return "GameActor"; }
     virtual const char *GetObjectName() const override { return GameActor::GetClassName(); }
+    const char* GetNoStaticClassName() { return "No static GameActor"; }
 
     QUERYINTERFACE_BEGIN
     QUERYINTERFACE_ADD(ID_Escape, IEscape, GameActor)

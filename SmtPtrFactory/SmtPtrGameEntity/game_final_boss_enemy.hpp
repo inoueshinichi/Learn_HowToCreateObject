@@ -25,6 +25,7 @@ public:
 
     static const char *GetClassName() { return "GameFinalBossEnemy"; }
     virtual const char *GetObjectName() const override { return GameFinalBossEnemy::GetClassName(); }
+    const char* GetNoStaticClassName() { return "No static FinalBossEnemy"; }
 
     QUERYINTERFACE_BEGIN
     QUERYINTERFACE_ADD(ID_Attack, IAttack, GameFinalBossEnemy)

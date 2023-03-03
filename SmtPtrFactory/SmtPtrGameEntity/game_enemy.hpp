@@ -24,6 +24,7 @@ public:
 
     static const char *GetClassName() { return "GameEnemy"; }
     virtual const char *GetObjectName() const override { return GameEnemy::GetClassName(); }
+    const char* GetNoStaticClassName() { return "No static GameEnemy"; }
 
     QUERYINTERFACE_BEGIN
     QUERYINTERFACE_ADD(ID_Escape, IEscape, GameEnemy)

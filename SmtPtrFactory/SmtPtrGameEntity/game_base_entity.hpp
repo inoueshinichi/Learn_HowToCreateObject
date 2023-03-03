@@ -22,6 +22,7 @@ public:
 
     static const char *GetClassName() { return "GameBaseEntity"; }
     virtual const char*GetObjectName() const override { return GameBaseEntity::GetClassName(); }
+    const char* GetNoStaticClassName() { return "No static GameBaseEntity"; }
 
     QUERYINTERFACE_BEGIN
     QUERYINTERFACE_END

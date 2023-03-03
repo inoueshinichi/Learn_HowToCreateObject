@@ -23,6 +23,7 @@ public:
 
     static const char *GetClassName() { return "GameCamera"; }
     virtual const char *GetObjectName() const override { return GameCamera::GetClassName(); }
+    const char* GetNoStaticClassName() { return "No static GameCamera"; }
 
     QUERYINTERFACE_BEGIN
     QUERYINTERFACE_ADD(ID_View, IView, GameCamera)

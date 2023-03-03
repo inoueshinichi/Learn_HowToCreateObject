@@ -80,6 +80,14 @@ int main(int, char**)
         }
         std::cout << std::endl;
 
+        // Chech no static function
+        std::cout << "[Check no static GetNoStaticClassName()]" << std::endl;
+        for (auto &sp : entities)
+        {
+            std::cout << sp->GetObjectName() << ": " << sp->GetNoStaticClassName() << std::endl;
+        }
+        std::cout << std::endl;
+
         // Check static function address with polymorphism
         std::cout << "[Check static function address by polymorphism]" << std::endl;
         for (auto &sp : entities)
