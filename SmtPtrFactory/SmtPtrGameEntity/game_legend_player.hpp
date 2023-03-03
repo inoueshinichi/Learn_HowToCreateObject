@@ -47,7 +47,11 @@ public:
         std::cout << GetObjectName() << " Defence" << std::endl;
     }
 
+    static int sCheckStaticID;
+
 protected:
     friend class GameEntityFactory;
     GameLegendPlayer() = default;
 };
+
+int GameLegendPlayer::sCheckStaticID = 4;

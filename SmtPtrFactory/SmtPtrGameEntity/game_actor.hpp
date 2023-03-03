@@ -33,7 +33,11 @@ public:
         std::cout << GetObjectName() << " Escape" << std::endl;
     }
 
+    static int sCheckStaticID;
+
 protected:
     friend class GameEntityFactory;
     GameActor() = default;
 };
+
+int GameActor::sCheckStaticID = 2;

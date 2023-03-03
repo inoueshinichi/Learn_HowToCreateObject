@@ -40,7 +40,11 @@ public:
         std::cout << GetObjectName() << " Defence" << std::endl;
     }
 
+    static int sCheckStaticID;
+
 protected:
     friend class GameEntityFactory;
     GameEnemy() = default;
 };
+
+int GameEnemy::sCheckStaticID = 5;

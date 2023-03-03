@@ -46,7 +46,12 @@ public:
     {
         std::cout << GetObjectName() << " ExtraDefence" << std::endl;
     }
+
+    static int sCheckStaticID;
+
 protected:
     friend class GameEntityFactory;
     GameFinalBossEnemy() = default;
 };
+
+int GameFinalBossEnemy::sCheckStaticID = 7;

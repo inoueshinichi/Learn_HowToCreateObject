@@ -21,4 +21,8 @@ public:
 
     static const char *GetClassName() { return "GameEntity"; }
     virtual const char*GetObjectName() const { return GameEntity::GetClassName(); }
+
+    static int sCheckStaticID;
 };
+
+int GameEntity::sCheckStaticID = 0;

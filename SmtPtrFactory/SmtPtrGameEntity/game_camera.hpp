@@ -33,7 +33,11 @@ public:
         std::cout << GetObjectName() << " View" << std::endl;
     }
 
+    static int sCheckStaticID;
+
 protected:
     friend class GameEntityFactory;
     GameCamera() = default;
 };
+
+int GameCamera::sCheckStaticID = 8;

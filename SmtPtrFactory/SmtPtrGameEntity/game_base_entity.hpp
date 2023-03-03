@@ -26,7 +26,11 @@ public:
     QUERYINTERFACE_BEGIN
     QUERYINTERFACE_END
 
+    static int sCheckStaticID;
+
 protected:
     friend class GameEntityFactory;
     GameBaseEntity() = default;
 };
+
+int GameBaseEntity::sCheckStaticID = 1;

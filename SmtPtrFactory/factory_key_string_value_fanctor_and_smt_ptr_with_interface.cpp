@@ -64,14 +64,6 @@ int main(int, char**)
         entities.emplace_back(factory.CreateEntity("GameFinalBossEnemy"));
         std::cout << std::endl;
 
-        // Check static function
-        std::cout << "[Check static GetClassName()]" << std::endl;
-        for (auto& sp : entities)
-        {
-            std::cout << sp->GetClassName() << std::endl;
-        }
-        std::cout << std::endl;
-
         // Check virtual function
         std::cout << "[Check virtual GetObjectName()]" << std::endl;
         for (auto& sp : entities)
@@ -79,6 +71,46 @@ int main(int, char**)
             std::cout << sp->GetObjectName() << std::endl;
         }
         std::cout << std::endl;
+
+        // Check static function
+        std::cout << "[Check static GetClassName()]" << std::endl;
+        for (auto &sp : entities)
+        {
+            std::cout << sp->GetObjectName() << ": " << sp->GetClassName() << std::endl;
+        }
+        std::cout << std::endl;
+
+        // Check static function address with polymorphism
+        std::cout << "[Check static function address by polymorphism]" << std::endl;
+        for (auto &sp : entities)
+        {
+            std::printf("%s: %p\n", sp->GetObjectName(), (void *)(sp->GetClassName));
+        }
+
+        // Check static variable with polymorphism
+        std::cout << "[Check static sCheckStaticID with polymorphism]" << std::endl;
+        for (auto& sp : entities)
+        {
+            std::cout << sp->GetObjectName() << ": " << sp->sCheckStaticID << std::endl;
+        }
+
+        // Check static variable by class name symbol
+        std::cout << "[Check static sCheckStaticID by ClassName Symbol]" << std::endl;
+        std::cout << "GameBaseEntity: " << GameBaseEntity::sCheckStaticID << std::endl;
+        std::cout << "GameCamera: " << GameCamera::sCheckStaticID << std::endl;
+        std::cout << "GameFpsCamera: " << GameFpsCamera::sCheckStaticID << std::endl;
+        std::cout << "GamePlayer: " << GamePlayer::sCheckStaticID << std::endl;
+        std::cout << "GameLegendPlayer: " << GameLegendPlayer::sCheckStaticID << std::endl;
+        std::cout << "GameEnemy: " << GameEnemy::sCheckStaticID << std::endl;
+        std::cout << "GameBossEnemy: " << GameBossEnemy::sCheckStaticID << std::endl;
+        std::cout << "GameFinalBossEnemy: " << GameFinalBossEnemy::sCheckStaticID << std::endl;
+
+        // Check static variable address with polymorphism
+        std::cout << "[Check static sCheckStaticID address by polymorphism]" << std::endl;
+        for (auto& sp : entities)
+        {
+            std::printf("%s: %p\n", sp->GetObjectName(), (void*)&(sp->sCheckStaticID));
+        }
 
         /**
          * @brief Interface

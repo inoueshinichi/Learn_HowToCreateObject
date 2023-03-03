@@ -47,7 +47,11 @@ public:
         std::cout << GetObjectName() << " Escape" << std::endl;
     }
 
+    static int sCheckStaticID;
+
 protected:
     friend class GameEntityFactory;
     GamePlayer() = default;
 };
+
+int GamePlayer::sCheckStaticID = 3;

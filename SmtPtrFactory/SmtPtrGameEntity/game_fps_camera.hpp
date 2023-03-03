@@ -39,7 +39,11 @@ public:
         std::cout << GetObjectName() << " FpsView" << std::endl;
     }
 
+    static int sCheckStaticID;
+
 protected:
     friend class GameEntityFactory;
     GameFpsCamera() = default;
 };
+
+int GameFpsCamera::sCheckStaticID = 9;
