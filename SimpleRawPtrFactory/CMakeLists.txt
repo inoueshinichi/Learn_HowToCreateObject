@@ -3,15 +3,15 @@ cmake_minimum_required(VERSION 3.14.6)
 include(../is_test_case.cmake)
 
 #Headers
-file(GLOB ENTITY_HEADERS RELATIVE ./GameEntity ./*.hpp) # Entity
-file(GLOB FACTORY_HEADERS RELATIVE ./Factory ./*.hpp) # Factory
+file(GLOB ENTITY_HEADERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} GameEntity/*.hpp) # Entity
+file(GLOB FACTORY_HEADERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} Factory/*.hpp) # Factory
 set(BUILD_HEADERS "")
 list(APPEND BUILD_HEADERS ${ENTITY_HEADERS})
 list(APPEND BUILD_HEADERS ${FACTORY_HEADERS})
 
 # Sources
-file(GLOB ENTITY_SOURCES RELATIVE ./GameEntity ./*.cpp) # Entity
-file(GLOB FACTORY_SOURCES RELATIVE ./Factory ./*.cpp) # Factory
+file(GLOB ENTITY_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} GameEntity/*.cpp) # Entity
+file(GLOB FACTORY_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} Factory/*.cpp) # Factory
 set(BUILD_SOURCES "")
 list(APPEND BUILD_SOURCES ${ENTITY_SOURCES})
 list(APPEND BUILD_SOURCES ${FACTORY_SOURCES})
