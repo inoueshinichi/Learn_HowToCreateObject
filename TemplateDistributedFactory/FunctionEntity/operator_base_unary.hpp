@@ -12,13 +12,15 @@
 #include <exception>
 #include <stdexcept>
 
+
 class BaseUnaryOp
 {
 public:
     BaseUnaryOp() {}
     virtual ~BaseUnaryOp() {}
 
-    inline float operator()(const float x) 
+    template <typename T>
+    inline T operator()(const T x)
     { 
         throw std::runtime_error("No implementation of BaseUnaryOp"); 
     }

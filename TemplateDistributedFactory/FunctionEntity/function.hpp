@@ -16,10 +16,11 @@
 #include <memory>
 #include <vector>
 #include <tuple>
+#include <string>
 
 #include <array.hpp>
 
-using ArrayVec = std::vector<ArrayPtr>;
+using ArrPtrVec = std::vector<ArrayPtr>;
 
 // インターフェース
 class Function
@@ -27,24 +28,28 @@ class Function
 public:
     typedef std::shared_ptr<Function> Ptr;
 
-    Function() {}
-    virtual ~Function() = 0;
+    explicit Function(const std::string& type) : mType(type) {}
+    virtual ~Function() {}/*= 0*/;
     Function(const Function&) = delete;
     Function& operator=(const Function&) = delete;
     Function(Function&&) = default;
     Function& operator=(Function&&) = default;
 
-    void Setup(const ArrayVec& inputs, const ArrayVec& outputs) { this->SetupImpl(inputs, outputs); }
-    void Execute(const ArrayVec& inputs, const ArrayVec& outputs) { this->ExecuteImpl(inputs, outputs); }
+    void Setup(const ArrPtrVec& inputs, const ArrPtrVec& outputs) { this->SetupImpl(inputs, outputs); }
+    void Execute(const ArrPtrVec& inputs, const ArrPtrVec& outputs) { this->ExecuteImpl(inputs, outputs); }
 
-    virtual const char* GetObjectName() = 0;
-    virtual Ptr Clone() = 0;
+    virtual const char* GetClassName() const = 0;
+    virtual Ptr Clone() const = 0;
     virtual int MinInputs() = 0;
     virtual int MaxOutputs() = 0;
 
+    const std::string& GetType() const { return mType; }
+
 protected:
-    virtual void SetupImpl(const ArrayVec &inputs, const ArrayVec &outputs) = 0;
-    virtual void ExecuteImpl(const ArrayVec &inputs, const ArrayVec &outputs) = 0;
+    virtual void SetupImpl(const ArrPtrVec &inputs, const ArrPtrVec &outputs) = 0;
+    virtual void ExecuteImpl(const ArrPtrVec &inputs, const ArrPtrVec &outputs) = 0;
+
+    std::string mType;
 };
 
 using FunctionPtr = Function::Ptr;

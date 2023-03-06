@@ -9,6 +9,15 @@
  * 
  */
 #include <function.hpp>
+#include <tuple>
+#include <type_traits>
+
+/**
+ * @brief Type Eraser
+ * 非テンプレート基底クラスとテンプレート派生クラスによる
+ * 型推論と継承を利用して型情報をカプセル化しつつ基底クラスから
+ * 自由にアクセスできる. 結果, ポリモーフィズムを実現できる.
+ */
 
 // コンストラクタ引数を保持するクラス
 template <typename... Args>
@@ -18,15 +27,17 @@ protected:
     std::tuple<std::remove_reference_t<Args>...> mArgs;
 
 public:
-    FunctionBase(Args... args) : Function(), mArgs(args...) {}
+    FunctionBase(const std::string& type, Args... args) : Function(type), mArgs(args...) {}
     virtual ~FunctionBase() {}
 
     int NumArgs() const { return sizeof...(Args); }
     const std::tuple<Args...> &GetArgs() const { return mArgs; }
 
     template <int Index>
-    auto GetIndexArg() -> decltype(mArgs.get<Index>(mArgs))
+    auto GetIndexArg() -> decltype(std::get<Index>(mArgs))
     {
-        return mArgs.get<Index>();
+        return std::get<Index>(mArgs);
     }
+
+    const std::string& GetTypeStr() const { return mType; }
 };

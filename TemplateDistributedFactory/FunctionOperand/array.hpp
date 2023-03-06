@@ -10,26 +10,77 @@
  */
 #pragma once
 #include <memory>
-#include <cstring>
+#include <array_derived.hpp>
 
-constexpr int ARRAY_SIZE = 10;
 
-class Array
+class Array : public std::enable_shared_from_this<Array>
 {
-    float mElements[ARRAY_SIZE];
 public:
-    Array() { std::memset((void*)mElements, 0, ARRAY_SIZE * sizeof(float)); }
-    virtual ~Array() {}
+    ~Array() {}
+    Array(const Array&) = delete;
+    Array& operator=(const Array&) = delete;
+    Array(Array&&) = default;
+    Array& operator=(Array&&) = default;
+    Array() : mArrayBase(nullptr) {}
 
-    Array(const Array &) = delete;
-    Array &operator=(const Array &) = delete;
-    Array(Array &&) = default;
-    Array &operator=(Array &&) = default;
+    using Ptr = std::shared_ptr<Array>;
 
-    void CopyTo(Array& array);
-    Array Clone();
+    template <typename T>
+    T* GetPtr()
+    {
+        if (!mArrayBase)
+        {
+            mArrayBase = std::make_shared<ArrayDerived<T> >();
+        }
+        return std::static_pointer_cast<ArrayDerived<T> >(mArrayBase)->GetPtr();
+    }
 
-    float& operator[](int i) { assert(i >=0); assert(i < ARRAY_SIZE); return mElements[i]; }
+    template <typename T>
+    const T* GetConstPtr()
+    {
+       return static_cast<const T*>(GetPtr<T>());
+    }
+
+    unsigned int Size() const
+    {
+        unsigned int size = 0;
+        if (mArrayBase)
+        {
+            size = mArrayBase->Size();
+        }
+        return size;
+    }
+
+    // void CopyTo(Ptr other) const
+    // {
+    //     this->mArrayBase->CopyTo(other->GetArrayBase());
+    // }
+
+    // Ptr Clone() const
+    // {
+    //     Ptr retPtr = std::make_shared<Array>();
+    //     ArrayBasePtr content = mArrayBase->Clone();
+    //     retPtr->SetArrayBase(content);
+    // }
+
+protected:
+
+    ArrayBasePtr GetArrayBase() const
+    {
+        return mArrayBase;
+    }
+
+    void SetArrayBase(ArrayBasePtr arrayBase)
+    {
+        mArrayBase = arrayBase;
+    }
+
+private:
+    ArrayBasePtr mArrayBase;
 };
 
-using ArrayPtr = std::shared_ptr<Array>;
+using ArrayPtr = Array::Ptr;
+
+
+
+

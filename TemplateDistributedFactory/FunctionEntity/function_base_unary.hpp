@@ -15,15 +15,15 @@ template <typename... Args>
 class UnaryBaseFunction : public FunctionBase<Args...>
 {
 public:
-    UnaryBaseFunction(Args... args) : FunctionBase(args...) {}
+    UnaryBaseFunction(const std::string& type, Args... args) : FunctionBase<Args...>(type, args...) {}
     virtual ~UnaryBaseFunction() {}
 
     int MinInputs() override final { return 1; }
     int MaxOutputs() override final { return 1; }
 
 protected:
-    void SetupImpl(const ArrayVec &inputs, const ArrayVec &outputs) override final
+    void SetupImpl(const ArrPtrVec &inputs, const ArrPtrVec &outputs) override final
     {
-        outputs.resize(inputs.size());
+        // nothing
     }
 };
