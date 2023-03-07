@@ -16,10 +16,10 @@
 template <typename Base, typename... Args>
 struct DataBaseItem
 {
-    typedef std::function< std::shared_ptr<Base> (Args...) > Creator;
+    using Creator = std::function<std::shared_ptr<Base>(const std::string&, Args...)>;
 
-    Creator mCreator; // functor for creation for derived class based on Base.
     std::string mType;
+    Creator mCreator; // functor for creation for derived class based on Base.
 
-    DataBaseItem(const Creator& creator, const std::string& type) : mCreator(creator), mType(type) {}
+    DataBaseItem(const std::string &type, const Creator &creator) : mType(type), mCreator(creator){}
 };

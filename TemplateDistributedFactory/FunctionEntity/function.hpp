@@ -41,7 +41,7 @@ public:
     virtual const char* GetClassName() const = 0;
     virtual Ptr Clone() const = 0;
     virtual int MinInputs() = 0;
-    virtual int MaxOutputs() = 0;
+    virtual int MinOutputs() = 0;
 
     const std::string& GetType() const { return mType; }
 

@@ -8,9 +8,14 @@
  * @copyright Copyright (c) 2023
  * 
  */
+#pragma once
+
 #include <function.hpp>
 #include <tuple>
 #include <type_traits>
+#include <iostream>
+
+
 
 /**
  * @brief Type Eraser
@@ -24,20 +29,31 @@ template <typename... Args>
 class FunctionBase : public Function
 {
 protected:
-    std::tuple<std::remove_reference_t<Args>...> mArgs;
+    using TupleArgs = std::tuple<std::remove_reference_t<Args>...>;
+    TupleArgs mArgs;
+
+    // constexpr void CheckTupleArgs(TupleArgs args, int index)
+    // {
+    //     if constexpr (index < sizeof...(Args))
+    //     {
+    //         std::cout << "tuple[" << index << "]: " << std::get<index>(args) << std::endl;
+    //         CheckTupleArgs(args, ++index);
+    //     }
+    // }
 
 public:
-    FunctionBase(const std::string& type, Args... args) : Function(type), mArgs(args...) {}
+    FunctionBase(const std::string& type, Args... args) : Function(type), mArgs(std::make_tuple(args...))
+    {
+        // CheckTupleArgs(mArgs, 0);
+    }
     virtual ~FunctionBase() {}
 
-    int NumArgs() const { return sizeof...(Args); }
-    const std::tuple<Args...> &GetArgs() const { return mArgs; }
+    constexpr int NumArgs() const { return sizeof...(Args); }
+    constexpr const TupleArgs &GetArgs() const { return mArgs; }
 
     template <int Index>
-    auto GetIndexArg() -> decltype(std::get<Index>(mArgs))
+    constexpr auto GetIndexArg() -> decltype(std::get<Index>(this->mArgs))
     {
-        return std::get<Index>(mArgs);
-    }
-
-    const std::string& GetTypeStr() const { return mType; }
+        return std::get<Index>(this->mArgs);
+    }    
 };

@@ -23,7 +23,7 @@
 Registry<Function>& Get_SinRegistry();
 
 /* Create_Sin */
-std::shared_ptr<Function> Create_Sin(const std::string& type);
+FunctionPtr Create_Sin(const std::string& type);
 
 
 /* SinUnaryOp */
@@ -41,16 +41,17 @@ public:
 
 /* Sin */
 template <typename T>
-class Sin : public UnaryFunction<T, SinUnaryOp>
+class Sin final : public UnaryFunction<T, SinUnaryOp>
 {
 public:
-    virtual ~Sin() {}
+    ~Sin() {}
     const char* GetClassName() const override final { return "Sin"; }
 
-    Sin(/*const std::string& type*/) : UnaryFunction<T, SinUnaryOp>(/*type*/) {}
+    Sin(const std::string& a0) : UnaryFunction<T, SinUnaryOp>(a0) {}
 
-    std::shared_ptr<Function> Clone() const override final
+    FunctionPtr Clone() const override final
     {
-        Create_Sin(this->mType);
+        return Create_Sin(this->mType);
     }
+
 };

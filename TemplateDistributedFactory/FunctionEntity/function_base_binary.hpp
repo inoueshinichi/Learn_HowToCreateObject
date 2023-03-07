@@ -1,9 +1,9 @@
 /**
- * @file function_base_unary.hpp
+ * @file function_base_binary.hpp
  * @author Shinichi Inoue (inoue.shinichi.1800@gmail.com)
  * @brief 
  * @version 0.1
- * @date 2023-03-01
+ * @date 2023-03-05
  * 
  * @copyright Copyright (c) 2023
  * 
@@ -11,14 +11,15 @@
 #pragma once
 #include <function_base.hpp>
 
+
 template <typename... Args>
-class UnaryBaseFunction : public FunctionBase<Args...>
+class BinaryBaseFunction : public FunctionBase<Args...>
 {
 public:
-    UnaryBaseFunction(const std::string& type, Args... args) : FunctionBase<Args...>(type, args...) {}
-    virtual ~UnaryBaseFunction() {}
+    BinaryBaseFunction(const std::string& type, Args... args) : FunctionBase<Args...>(type, args...) {}
+    virtual ~BinaryBaseFunction() {}
 
-    int MinInputs() override final { return 1; }
+    int MinInputs() override final { return 2; }
     int MinOutputs() override final { return 1; }
 
 protected:

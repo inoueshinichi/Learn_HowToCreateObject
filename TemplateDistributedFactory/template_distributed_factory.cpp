@@ -14,6 +14,7 @@
 #include <vector>
 #include <exception>
 #include <memory>
+#include <tuple>
 
 /* Singleton manager */
 #include <singleton_manager.hpp>
@@ -23,16 +24,24 @@
 
 /* Generic func with template distributed registry. */
 #include <function_sin.hpp>
+#include <function_add.hpp>
+#include <function_pow.hpp>
 
 
 int main(int, char**)
 {
     try
     { 
-        std::vector<std::shared_ptr<Function>> funcs;
+        std::vector<FunctionPtr> funcs;
         funcs.push_back(Create_Sin("float"));
         funcs.push_back(Create_Sin("double"));
+        funcs.push_back(Create_Add("float"));
+        funcs.push_back(Create_Add("double"));
+        funcs.push_back(Create_Pow("float", 3.14));
 
+        // Clone
+        FunctionPtr pow = funcs.back()->Clone();
+        
         // Check
         for (auto& func : funcs)
         {

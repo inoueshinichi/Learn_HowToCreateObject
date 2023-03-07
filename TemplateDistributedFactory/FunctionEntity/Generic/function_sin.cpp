@@ -9,8 +9,8 @@
  * 
  */
 #include <function_sin.hpp>
-#include <singleton_manager-internal.hpp>
 
+#include <singleton_manager-internal.hpp>
 #include <system_init_for_register.hpp>
 
 
@@ -20,13 +20,12 @@ Registry<Function>& Get_SinRegistry()
     struct SinRegistryHolder // Get_SinRegistry と SinRegistryHolder で オブジェクトIDを実現している
     {
         Registry<Function> instance;
-        SinRegistryHolder() {}
     };
     return SingletonManager::Get<SinRegistryHolder>()->instance;
 }
 
 /* Create_Sin */
-std::shared_ptr<Function> Create_Sin(const std::string &type)
+FunctionPtr Create_Sin(const std::string &type)
 {
     SystemInitForRegister();
     return Get_SinRegistry().Create(type); // new Sin class as std::shared_ptr<Sin>
