@@ -58,7 +58,7 @@ function(make_is_test_case BUILD_HEADERS BUILD_SOURCES BUILD_EXE_SOURCE)
     # Options
     target_compile_options(${BUILD_TARGET} PRIVATE
         # MSVC
-        $<$<CXX_COMPILER_ID:MSVC>: /W4 /WX /wd"4100" /wd"5054" /GR /EHsc /utf-8 /Zc:__cplusplus /Zc:preprocessor /bigobj>
+        $<$<CXX_COMPILER_ID:MSVC>: /W4 /wd"4100" /wd"5054" /GR /EHsc /utf-8 /Zc:__cplusplus /Zc:preprocessor /bigobj> # /WXは警告をエラーと見なす
         $<$<AND:$<CXX_COMPILER_ID:MSVC>,$<CONFIG:Release>>:/Ob2 /O2>
         $<$<AND:$<CXX_COMPILER_ID:MSVC>,$<CONFIG:Debug>>:/Ob0 /Od /Zi /RTC1>
         $<$<AND:$<CXX_COMPILER_ID:MSVC>,$<CONFIG:MinSizeRel>>:/O1>
@@ -89,7 +89,7 @@ function(make_is_test_case BUILD_HEADERS BUILD_SOURCES BUILD_EXE_SOURCE)
             find_package(OpenMP REQUIRED)
             target_compile_options(${BUILD_TARGET} PRIVATE
                 $<$<CXX_COMPILER_ID:MSVC>:/openmp>
-                $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>:-fopenmp>
+                $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-fopenmp>
             )
         else()
             # macOSのOpenMPはGeneratorExpressionに対応していないバグがある.
@@ -121,13 +121,13 @@ function(make_is_test_case BUILD_HEADERS BUILD_SOURCES BUILD_EXE_SOURCE)
     endif()
 
     if(MSVC)
-        if(${BUILD_CPP_MSVC_STATIC_RUNTIME})
-            set_target_properties(TARGET ${BUILD_TARGET} PROPERTIES
+        if(OFF)
+            set_target_properties(${BUILD_TARGET} PROPERTIES
                 MSVC_RUNTIME_LIBRARY MultiThreaded$<CONFIG:Release>>:> # -MT (MultiThreaded)
                 MSVC_RUNTIME_LIBRARY MultiThreaded$<CONFIG:Debug>>:Debug> # -MTd (MultiThreadedDebug)
             )
         else()
-            set_target_properties(TARGET ${BUILD_TARGET} PROPERTIES
+            set_target_properties(${BUILD_TARGET} PROPERTIES
                     MSVC_RUNTIME_LIBRARY MultiThreaded$<CONFIG:Release>>:DLL> # -MD (MultiThreadedDLL)
                     MSVC_RUNTIME_LIBRARY MultiThreaded$<CONFIG:Debug>>:DebugDLL> # -MDd (MultiThreadedDebugDLL)
             )
