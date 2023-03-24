@@ -18,3 +18,31 @@
 #define PLUGIN_VERSION_PATCH "@CMAKE_PLUGIN_VERSION_PATCH@"
 #define PLUGIN_VERSION PLUGIN_VERSION_MAJOR.PLUGIN_VERSION_MINOR.PLUGIN_VERSION_PATCH
 
+#define NOMAXMIN // Workaround for windows max, min macro
+#include <windows.h>
+#include <tlhelp32.h>
+
+#include <atlstr.h> // CString (ATL)
+#include <tchar.h>  // _TCHAR
+
+#include <iostream>
+#include <sstream>
+#include <string>
+
+void ShowWindowsOSVersion()
+{
+    std::ostringstream oss;
+    oss << "Windows Operating System Version" << std::endl;
+    oss << "--------------------------------" << std::endl;
+
+    OSVERSIONINFOEX osvi;
+    ZeroMemory(&osvi, sizeof(OSVERSIONINFOEX));
+    osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
+    GetVersionEx(&osvi);
+    oss << "Major version: " << osvi.dwMajorVersion << "; ";
+    oss << "Minor version: " << osvi.dwMinorVersion << "; ";
+    oss << "szCSDVersion: " << osvi.szCSDVersion << ";";
+    oss << std::endl;
+
+    std::cout << oss.str();
+}

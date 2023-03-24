@@ -10,12 +10,15 @@
  */
 #include <iostream>
 #include <exception>
+#include <memory>
+
+#include <plugin_manager_host.hpp>
 
 int main(int, char**)
 {
     try
     {
-        /* code */
+       auto pluginManager = std::make_shared<PluginManager>();
     }
     catch(const std::exception& e)
     {
