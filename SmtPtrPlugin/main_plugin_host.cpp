@@ -13,12 +13,14 @@
 #include <memory>
 
 #include <plugin_manager_host.hpp>
+#include <winapi_plugin_manager_host.hpp>
 
 int main(int, char**)
 {
     try
     {
        auto pluginManager = std::make_shared<PluginManager>();
+       auto winapiPluginManager = std::make_shared<WinApiPluginManager>();
     }
     catch(const std::exception& e)
     {

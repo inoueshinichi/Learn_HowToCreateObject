@@ -22,6 +22,10 @@ struct PluginInfo
     std::shared_ptr<Plugin> mPluginPtr;
     unsigned int mID;
     std::intptr_t mHandle;
+    std::string mCategory;
+    int mMajorVersion;
+    int mMinorVersion;
+    int mPatchVersion;
 };
 
 /**
@@ -31,15 +35,16 @@ struct PluginInfo
 class PluginManager : public std::enable_shared_from_this<PluginManager>
 {
 public:
+    using PluginMap = std::unordered_map<std::string, PluginInfo>;
+
     PluginManager() = default;
     ~PluginManager() = default;
     PluginManager(const PluginManager&) = delete;
     PluginManager& operator=(const PluginManager&) = delete;
-    PluginManager(PluginManager&& rhs);
-    PluginManager& operator=(PluginManager& rhs);
-
-    using PluginMap = std::unordered_map<std::string, PluginInfo>;
-
-private:
+    PluginManager(PluginManager&& rhs) = default;
+    PluginManager& operator=(PluginManager& rhs) = default;
+    
+protected:
     PluginMap mPluginMap;
 };
+
