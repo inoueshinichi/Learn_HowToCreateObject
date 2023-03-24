@@ -1,0 +1,20 @@
+/**
+ * @file version.hpp.in
+ * @author Shinichi Inoue (inoue.shinichi.1800@gmail.com)
+ * @brief 
+ * @version 0.1
+ * @date 2023-03-24
+ * 
+ * @copyright Copyright (c) 2023
+ * 
+ */
+#pragma once
+
+#define PLUGIN_AUTHOR "@CMAKE_PLUGIN_AUTHOR@"
+#define PLUGIN_EMAIL "@CMAKE_PLUGIN_EMAIL@"
+#define PLUGIN_PLATFORM "@CMAKE_PLUGIN_PLATFORM@"
+#define PLUGIN_VERSION_MAJOR "@CMAKE_PLUGIN_VERSION_MAJOR@"
+#define PLUGIN_VERSION_MINOR "@CMAKE_PLUGIN_VERSION_MINOR@"
+#define PLUGIN_VERSION_PATCH "@CMAKE_PLUGIN_VERSION_PATCH@"
+#define PLUGIN_VERSION PLUGIN_VERSION_MAJOR.PLUGIN_VERSION_MINOR.PLUGIN_VERSION_PATCH
+

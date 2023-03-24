@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14.6)
 
 # CMake version
-message(STATUS "CMake Ver: ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMAKE_PATCH_VERSION}.${CMAKE_TWEAK_VERSION}")
+message(STATUS "CMake Verion: ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMAKE_PATCH_VERSION}.${CMAKE_TWEAK_VERSION}")
 
 ###############################################################################
 # Policy
@@ -81,3 +81,4 @@ add_subdirectory(SimpleRawPtrFactory)
 add_subdirectory(SmtPtrFactory)
 add_subdirectory(RTTIClassMemAddIDFactory)
 add_subdirectory(TemplateDistributedFactory)
+add_subdirectory(SmtPtrPlugin)
