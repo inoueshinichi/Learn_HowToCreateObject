@@ -17,16 +17,15 @@ class BasicPlugin;
 class BasicPluginManager final : public PluginManager
 {
 public:
-    
-protected:
-    BasicPluginManager() {}
-    ~BasicPluginManager() {}
-
-    std::shared_ptr<BasicPlugin> GetPlugin(const std::string& path, const std::string& exportFactoryName)
+    std::shared_ptr<BasicPlugin> GetPlugin(const std::string &path, const std::string &exportFactoryName)
     {
         std::intptr_t id = PluginManager::AddPlugin(path, exportFactoryName, *this);
         return static_pointer_cast<BasicPlugin>(mPluginMap[id].mPluginPtr);
     }
+
+protected:
+    BasicPluginManager() {}
+    ~BasicPluginManager() {}
 
 private:
 };

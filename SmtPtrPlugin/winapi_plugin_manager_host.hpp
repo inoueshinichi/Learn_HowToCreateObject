@@ -12,16 +12,21 @@
 
 #include <plugin_manager_host.hpp>
 
+class WinApiPlugin;
+
 class WinApiPluginManager final : public PluginManager
 {
 public:
-   
+    std::shared_ptr<WinApiPlugin> GetPlugin(const std::string &path, const std::string &exportFactoryName)
+    {
+        std::intptr_t id = PluginManager::AddPlugin(path, exportFactoryName, *this);
+        return static_pointer_cast<WinApiPlugin>(mPluginMap[id].mPluginPtr);
+    }
 
-    
 protected:
     WinApiPluginManager() {}
     ~WinApiPluginManager() {}
 
 private:
-    static unsigned int sNextID;
+
 };
