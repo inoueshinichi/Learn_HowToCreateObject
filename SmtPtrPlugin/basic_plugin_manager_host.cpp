@@ -3,15 +3,6 @@
 #include <algorithm>
 
 
-unsigned int BasicPluginManager::sNextID = 0;
-
-BasicPluginManager::BasicPluginManager()
-    : PluginManager()
-{}
-
-
-
-
 bool BasicPluginManager::Load(const std::string &path)
 {
     Unload(path);

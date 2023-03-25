@@ -20,16 +20,8 @@ class BasicPluginManager;
 class BasicPlugin final : public Plugin
 {
 public:
-    BasicPlugin(BasicPluginManager& manager) : mManager(manager) {}
+    BasicPlugin(BasicPluginManager& manager) : Plugin(manager), mManager(manager) {}
     ~BasicPlugin() {}
-
-    void About() const override final;
-    int MajorVersion() const override final;
-    int MinorVersion() const override final;
-    int PatchVersion() const override final;
-    const char *CompiledDatetime() const override final;
-    const char *CompiledTime() const override final;
-    const char *FilePath() const override final;
 
 protected:
     BasicPluginManager& mManager;

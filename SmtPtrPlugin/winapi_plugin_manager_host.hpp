@@ -15,11 +15,9 @@
 class WinApiPluginManager final : public PluginManager
 {
 public:
-    using CreatePluginType = std::function<std::shared_ptr<Plugin>(WinApiPluginManager &)>;
+   
 
-    bool Load(const std::string &path) override final;
-    void Unload(const std::string &path) override final;
-    void UnloadAll() override final;
+    
 protected:
     WinApiPluginManager() {}
     ~WinApiPluginManager() {}

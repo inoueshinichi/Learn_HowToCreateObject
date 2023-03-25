@@ -1,68 +1,77 @@
 #include <plugin_manager_host.hpp>
 
+#include <algorithm>
 
-DllMap &PluginManager::GetDllMap()
+PluginManager::DllMap &PluginManager::GetDllMap()
 {
-    static DllMap sDllMap;
+    static PluginManager::DllMap sDllMap;
     return sDllMap;
 }
 
-std::recursive_mutex &PluginManager::GetRecMutex()
+std::mutex &PluginManager::GetMutex()
 {
-    static std::recursive_mutex sRMtx;
-    return sRMtx;
+    static std::mutex sMtx;
+    return sMtx;
 }
 
-void PluginManager::AddRef(const std::string &keyPath, DllMap &dllMap)
-{
-    auto &sRMtx = GetRecMutex();
-    std::lock_guard<std::recursive_mutex> locker(sRMtx);
-    dllMap[keyPath].second += 1;
-}
+// std::recursive_mutex &PluginManager::GetRecMutex()
+// {
+//     static std::recursive_mutex sRMtx;
+//     return sRMtx;
+// }
 
-bool PluginManager::Release(const std::string &keyPath, DllMap &dllMap)
-{
-    auto &sRMtx = GetRecMutex();
-    std::lock_guard<std::recursive_mutex> locker(sRMtx);
+// void PluginManager::AddRef(const std::string &keyPath, DllMap &dllMap)
+// {
+//     auto &sRMtx = GetRecMutex();
+//     std::lock_guard<std::recursive_mutex> locker(sRMtx);
+//     dllMap[keyPath].mRefCount += 1;
+// }
 
-    auto &dllMap = GetDllMap();
-    std::intptr_t handle = dllMap[keyPath].first;
-    dllMap[keyPath].second -= 1;
+// bool PluginManager::Release(const std::string &keyPath, DllMap &dllMap)
+// {
+//     auto &sRMtx = GetRecMutex();
+//     std::lock_guard<std::recursive_mutex> locker(sRMtx);
 
-    if (dllMap[keyPath].second > 0)
-    {
-        return false;
-    }
+//     auto &dllMap = GetDllMap();
+//     std::intptr_t handle = dllMap[keyPath].mHandle;
+//     dllMap[keyPath].mRefCount -= 1;
 
-#if defined(_MSC_VER)
+//     if (dllMap[keyPath].mRefCount > 0)
+//     {
+//         return false;
+//     }
 
-        // Plugin(Dll)を解放
-        ::FreeLibrary(handle);
+// #if defined(_MSC_VER)
 
-#elif defined(__APPLE__) && defined(__MACH__)
+//         // Plugin(Dll)を解放
+//         ::FreeLibrary(handle);
 
-#else
+// #elif defined(__APPLE__) && defined(__MACH__)
 
-#endif
+// #else
 
-    // Unregister
-    dllMap.erase(keyPath);
+// #endif
 
-    return true;
-}
+//     // Unregister
+//     dllMap.erase(keyPath);
+
+//     return true;
+// }
 
 std::intptr_t PluginManager::LoadDll(const std::string &path)
 {
-    auto &sRMtx = GetRecMutex();
-    std::lock_guard<std::recursive_mutex> locker(sRMtx);
+    // auto &sRMtx = GetRecMutex();
+    // std::lock_guard<std::recursive_mutex> locker(sRMtx);
+
+    auto &sMtx = GetMutex();
+    std::lock_guard<std::mutex> locker(sMtx);
 
     auto &dllMap = GetDllMap();
     auto iter = std::find(dllMap.begin(), dllMap.end(), path);
     if (iter != dllMap.end())
     {
-        auto value = (*iter).second;
-        AddRef(path, dllMap);
-        return value.first;
+        // AddRef(path, dllMap);
+        return (*iter).second.mHandle;
     }
 
     std::intptr_t handle;
@@ -99,34 +108,63 @@ std::intptr_t PluginManager::LoadDll(const std::string &path)
 #endif
 
     // Register
-    dllMap[path] = std::make_pair(handle, 0);
-    AddRef(path, dllMap);
+    DllInfo info;
+    info.mHandle = handle;
+    // info.RefCount = 0;
+    dllMap[path] = info;
+    // AddRef(path, dllMap);
     return handle;
 }
 
-bool PluginManager::UnloadDll(const std::string &path)
+void PluginManager::UnloadDll(const std::string &path)
 {
-    auto &sRMtx = GetRecMutex();
-    std::lock_guard<std::recursive_mutex> locker(sRMtx);
+    // auto &sRMtx = GetRecMutex();
+    // std::lock_guard<std::recursive_mutex> locker(sRMtx);
+
+    auto &sMtx = GetMutex();
+    std::lock_guard<std::mutex> locker(sMtx);
 
     auto &dllMap = GetDllMap();
     auto iter = std::find(dllMap.begin(), dllMap.end(), path);
     if (iter != dllMap.end())
     {
-        return Release(path, dllMap);
+        // return Release(path, dllMap);
+        for (size_t i = 0; i < (*iter).second.mPluginInfos.size(); ++i)
+        {
+            (*iter).second.mPluginInfos[i]->mDllInfo = nullptr; // Plugin(Info)とDllの関連を切る
+        }
+        (*iter).second.mPluginInfos.clear();
+
+        std::intptr_t handle = (*iter).second.mHandle;
+
+#if defined(_MSC_VER)
+
+        // Plugin(Dll)を解放
+        ::FreeLibrary(handle);
+
+#elif defined(__APPLE__) && defined(__MACH__)
+
+#else
+
+#endif
+
+        (*iter).second.mHandle = NULL;
+        dllMap.erase(iter);
+    }
+}
+
+void PluginManager::UnloadDllAll()
+{
+    auto& dllMap = GetDllMap();
+    std::unordered_set<std::string> dllFilePaths;
+    for (auto& pair : dllMap)
+    {
+        dllFilePaths.insert(pair.first);
     }
 
-    return false;
+    for (auto& path : dllFIlePaths)
+    {
+        UnloadDll(path);
+    }
 }
-
-PluginManager::PluginManager()
-{
-
-}
-
-PluginManager::~PluginManager()
-{
-    ClearPlugins();
-}
-
 
