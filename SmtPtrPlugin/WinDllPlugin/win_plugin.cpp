@@ -1,12 +1,12 @@
 #include <win_plugin.hpp>
 
 
-std::shared_ptr<IPlugin> CreatePlugin(std::shared_ptr<PluginManager> manager)
+std::shared_ptr<Plugin> CreatePlugin(BasicPluginManager& manager)
 {
     return std::make_shared<BasicPlugin>(manager);
 }
 
-std::shared_ptr<IPlugin> CreateWinApiPlugin(std::shared_ptr<WinApiPluginManager> manager)
+std::shared_ptr<Plugin> CreateWinApiPlugin(WinApiPluginManager& manager)
 {
     return std::make_shared<WinApiPlugin>(manager);
 }

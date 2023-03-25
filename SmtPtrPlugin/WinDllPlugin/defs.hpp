@@ -10,7 +10,7 @@
  */
 #pragma once
 
-#ifdef defined(PLUGIN_EXPORTS)
+#ifdef defined(PLUGIN_EXPORTS) || defined(PLUGIN_dbg_EXPORTS)
 #   define PLUGIN_API __declspec(dllexport)
 #else
 #   define PLUGIN_API __declspec(dllimport)

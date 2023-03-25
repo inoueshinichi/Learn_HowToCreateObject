@@ -12,19 +12,19 @@
 #include <memory>
 
 // Plugin
-#include <defs_plugin.hpp>
+#include <defs.hpp>
 
 // Host
-#include <plugin.hpp>
-#include <plugin_manager_host.hpp>
+#include <plugin_host.hpp>
+#include <basic_plugin_manager_host.hpp>
 #include <winapi_plugin_manager_host.hpp>
 
 // Plugin C Interface
 extern "C"
 {
-    // Basic Module
-    PLUGIN_API std::shared_ptr<IPlugin> CreatePlugin(std::shared_ptr<PluginManager> manager);
+    // Basic Plugin
+    PLUGIN_API std::shared_ptr<Plugin> CreateBasicPlugin(BasicPluginManager& manager);
 
-    // WinApi Module
-    PLUGIN_API std::shared_ptr<IPlugin> CreateWinApiPlugin(std::shared_ptr<WinApiPluginManager> manager);
+    // WinApi Plugin
+    PLUGIN_API std::shared_ptr<Plugin> CreateWinApiPlugin(WinApiPluginManager& manager);
 }

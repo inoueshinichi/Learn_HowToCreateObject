@@ -118,6 +118,12 @@ target_compile_definitions(${DLL_PLUGIN_TARGET} PRIVATE
     $<$<AND:$<CXX_COMPILER_ID:MSVC>,$<CONFIG:Debug>>:_DEBUG>
     $<$<AND:$<CXX_COMPILER_ID:MSVC>,$<CONFIG:MinSizeRel>>:NDEBUG>
     $<$<AND:$<CXX_COMPILER_ID:MSVC>,$<CONFIG:RelWithDebgInfo>>:_DEBUG>
+
+    # Dll Exporter
+    $<$<AND:$<CXX_COMPILER_ID:MSVC>,$<CONFIG:Release>>:PLUGIN_EXPORTS>
+    $<$<AND:$<CXX_COMPILER_ID:MSVC>,$<CONFIG:Debug>>:PLUGIN_dbg_EXPORTS>
+    $<$<AND:$<CXX_COMPILER_ID:MSVC>,$<CONFIG:MinSizeRel>>:PLUGIN_EXPORTS>
+    $<$<AND:$<CXX_COMPILER_ID:MSVC>,$<CONFIG:RelWithDebgInfo>>:PLUGIN_dbg_EXPORTS>
 )
 
 # Features

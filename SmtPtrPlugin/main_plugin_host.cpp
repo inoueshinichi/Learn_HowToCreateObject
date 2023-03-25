@@ -19,8 +19,8 @@ int main(int, char**)
 {
     try
     {
-       auto pluginManager = std::make_shared<PluginManager>();
-       auto winapiPluginManager = std::make_shared<WinApiPluginManager>();
+       BasicPluginManager basicPluginManager;
+       WinApiPluginManager winapiPluginManager;
     }
     catch(const std::exception& e)
     {
