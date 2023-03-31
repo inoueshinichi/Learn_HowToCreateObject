@@ -43,9 +43,23 @@ set(BUILD_TARGET ${HOST_EXE_NAME})
 # Project
 project(${BUILD_TARGET} LANGUAGES C CXX VERSION 0.1.0)
 
+# Include Dir
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+
 # Exe
-add_executable(${BUILD_TARGET} 
-    ${HOST_EXE_SOURCE}
+add_executable(${BUILD_TARGET} ${HOST_EXE_SOURCE})
+
+# Sources
+target_sources(${BUILD_TARGET} PRIVATE
+    plugin_host.hpp
+    plugin_host.cpp
     plugin_manager_host.hpp
     plugin_manager_host.cpp
 )
+
+if(MSVC)
+    target_sources(${BUILD_TARGET} PRIVATE
+        winapi_plugin_manager_host.hpp
+        winapi_plugin_manager_host.cpp
+    )
+endif()

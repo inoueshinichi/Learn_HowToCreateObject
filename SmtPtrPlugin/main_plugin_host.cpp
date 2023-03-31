@@ -12,7 +12,7 @@
 #include <exception>
 #include <memory>
 
-#include <plugin_manager_host.hpp>
+#include <basic_plugin_manager_host.hpp>
 #include <winapi_plugin_manager_host.hpp>
 
 int main(int, char**)

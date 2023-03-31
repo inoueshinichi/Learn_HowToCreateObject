@@ -90,7 +90,7 @@ std::intptr_t PluginManager::LoadDll(const std::string &path)
             NULL,
             GetLastError(),
             MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-            (LPTSTR)&lpMsgBuf;
+            (LPTSTR)&lpMsgBuf,
             0,
             NULL);
 
@@ -140,7 +140,7 @@ void PluginManager::UnloadDll(const std::string &path)
 #if defined(_MSC_VER)
 
         // Plugin(Dll)を解放
-        ::FreeLibrary(handle);
+        ::FreeLibrary((HMODULE)handle);
 
 #elif defined(__APPLE__) && defined(__MACH__)
 
@@ -162,7 +162,7 @@ void PluginManager::UnloadDllAll()
         dllFilePaths.insert(pair.first);
     }
 
-    for (auto& path : dllFIlePaths)
+    for (auto& path : dllFilePaths)
     {
         UnloadDll(path);
     }

@@ -37,13 +37,15 @@
 
 #include <plugin_host.hpp>
 
+class DllInfo;
+
 struct PluginInfo
 {
     std::shared_ptr<Plugin> mPluginPtr; // この変数でプラグインのスマートポインタの生存期間を縛る.
     DllInfo *mDllInfo;                  // 所属するDllファイル情報へのポインタ
     std::string mDllFilePath;
-    std::string mCompileDatetime;
-    std::string mCompileTime;
+    std::string mCompiledDatetime;
+    std::string mCompiledTime;
     int mMajorVersion;
     int mMinorVersion;
     int mPatchVersion;
@@ -103,7 +105,7 @@ void PluginManager::ClearPlugins()
 
     for (const auto& id : ids)
     {
-        RemovePlugin(ids);
+        RemovePlugin(id);
     }
 
     mPluginMap.clear();
@@ -142,12 +144,14 @@ std::intptr_t PluginManager::AddPlugin(const std::string &path, const std::strin
     }
 
     // ファクトリ関数
-    std::function<std::shared_ptr<Plugin>(PLUGIN_MANAGER &)> creator;
+    using CreatorPtr = std::shared_ptr<Plugin> (*)(PLUGIN_MANAGER &);
+    // std::function<CreatorPtr> creator;
+    CreatorPtr creator;
 
 #if defined(_MSC_VER)
 
     // プラグインオブジェクトのファクトリ関数のポインタを取得
-    creator = ::GetProcAddress((HMODULE)handle, _T(exportFactoryName.c_str()));
+    creator = (CreatorPtr)::GetProcAddress((HMODULE)handle, _T(exportFactoryName.c_str()));
     if (creator == NULL)
     {
         return NULL;
@@ -171,13 +175,13 @@ std::intptr_t PluginManager::AddPlugin(const std::string &path, const std::strin
     info.mPluginPtr = pluginPtr;   // Pluginスマートポインタを外部に公開しても生存期間は, このポインタが管理する.
     info.mDllInfo = &dllMap[path]; // 所属先のDllInfoへのポインタ
     info.mDllFilePath = path;
-    info.mCompiledDatatime = plugin->CompiledDatatime();
-    info.mCompiledTime = plugin->CompiledTime();
-    info.mMajorVersion = plugin->MajorVersion();
-    info.mMinorVersion = plugin->MinorVersion();
-    info.mPatchVersion = plugin->PatchVersion();
+    info.mCompiledDatetime = pluginPtr->CompiledDatetime();
+    info.mCompiledTime = pluginPtr->CompiledTime();
+    info.mMajorVersion = pluginPtr->MajorVersion();
+    info.mMinorVersion = pluginPtr->MinorVersion();
+    info.mPatchVersion = pluginPtr->PatchVersion();
 
-    std::intptr_t id = static_cast<std::intptr_t>(pluginPtr.get()); // 生ポインタ(アドレス)をIDとする
+    std::intptr_t id = reinterpret_cast<std::intptr_t>((void *)pluginPtr.get()); // 生ポインタ(アドレス)をIDとする
     mPluginMap[id] = info; // Register
 
     dllMap[path].mPluginInfos.push_back(&mPluginMap[id]); // 所属するPluginInfoへのポインタ

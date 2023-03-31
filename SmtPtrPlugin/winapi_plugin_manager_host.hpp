@@ -20,10 +20,10 @@ public:
     std::shared_ptr<WinApiPlugin> GetPlugin(const std::string &path, const std::string &exportFactoryName)
     {
         std::intptr_t id = PluginManager::AddPlugin(path, exportFactoryName, *this);
-        return static_pointer_cast<WinApiPlugin>(mPluginMap[id].mPluginPtr);
+        return std::static_pointer_cast<WinApiPlugin>(mPluginMap[id].mPluginPtr);
     }
 
-protected:
+// protected:
     WinApiPluginManager() {}
     ~WinApiPluginManager() {}
 
