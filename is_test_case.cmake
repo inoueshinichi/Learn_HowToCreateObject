@@ -7,7 +7,7 @@ function(make_is_test_case BUILD_HEADERS BUILD_SOURCES BUILD_EXE_SOURCE)
     get_filename_component(BUILD_TARGET ${BUILD_EXE_SOURCE} NAME_WE)
 
     # Project
-    project(${BUILD_TARGET} LANGUAGES CXX VERSION 0.1.0)
+    project(${BUILD_TARGET} LANGUAGES C CXX VERSION 0.1.0)
 
     # Exe
     add_executable(${BUILD_TARGET} ${BUILD_EXE_SOURCE})
@@ -58,7 +58,7 @@ function(make_is_test_case BUILD_HEADERS BUILD_SOURCES BUILD_EXE_SOURCE)
     # Options
     target_compile_options(${BUILD_TARGET} PRIVATE
         # MSVC
-        $<$<CXX_COMPILER_ID:MSVC>: /W4 /wd"4100" /wd"5054" /GR /EHsc /utf-8 /Zc:__cplusplus /Zc:preprocessor /bigobj> # /WXは警告をエラーと見なす
+        $<$<CXX_COMPILER_ID:MSVC>: /W4 /GR /EHsc /utf-8 /Zc:__cplusplus /Zc:preprocessor /bigobj> # /WXは警告をエラーと見なす
         $<$<AND:$<CXX_COMPILER_ID:MSVC>,$<CONFIG:Release>>:/Ob2 /O2>
         $<$<AND:$<CXX_COMPILER_ID:MSVC>,$<CONFIG:Debug>>:/Ob0 /Od /Zi /RTC1>
         $<$<AND:$<CXX_COMPILER_ID:MSVC>,$<CONFIG:MinSizeRel>>:/O1>
@@ -70,6 +70,12 @@ function(make_is_test_case BUILD_HEADERS BUILD_SOURCES BUILD_EXE_SOURCE)
         $<$<AND:$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>,$<CONFIG:Debug>>:-O0 -g>
         $<$<AND:$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>,$<CONFIG:MinSizeRel>>:-Os>
         $<$<AND:$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>,$<CONFIG:RelWithDebgInfo>>:-O2 -g>
+    )
+
+    # Options for Suppression of Warning
+    target_compile_options(${BUILD_TARGET} PRIVATE
+        # MSVC
+        $<$<CXX_COMPILER_ID:MSVC>: /wd"4100" /wd"5054" /wd"4819" /wd"4099">
     )
 
     # Output Preprocessor(*.ii) & Assembler(*.s)

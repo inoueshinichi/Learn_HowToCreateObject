@@ -9,22 +9,25 @@
  * 
  */
 #pragma once
-#include <memory>
 
 // Plugin
 #include <defs.hpp>
 
 // Host
 #include <plugin_host.hpp>
-#include <basic_plugin_manager_host.hpp>
-#include <winapi_plugin_manager_host.hpp>
+#include <plugin_manager_host.hpp>
+
+#include <memory>
 
 // Plugin C Interface
+#if defined(__cplusplus)
 extern "C"
 {
-    // Basic Plugin
-    PLUGIN_API std::shared_ptr<Plugin> CreateBasicPlugin(BasicPluginManager& manager);
+#endif
 
     // WinApi Plugin
-    PLUGIN_API std::shared_ptr<Plugin> CreateWinApiPlugin(WinApiPluginManager& manager);
+    WIN_PLUGIN_API std::shared_ptr<WinApiPlugin> CreateWinApiPlugin(PluginManager<WinApiPlugin> &manager);
+
+#if defined(__cplusplus)
 }
+#endif

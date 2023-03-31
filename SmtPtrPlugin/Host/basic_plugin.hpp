@@ -1,5 +1,5 @@
 /**
- * @file winapi_plugin.hpp
+ * @file basic_plugin.hpp
  * @author Shinichi Inoue (inoue.shinichi.1800@gmail.com)
  * @brief 
  * @version 0.1
@@ -9,28 +9,28 @@
  * 
  */
 #pragma once
-#include <defs.hpp>
 
 #include <plugin_host.hpp>
+#include <plugin_manager_host.hpp>
 
 #include <memory>
 
-class WinApiPluginManager;
+class PluginManager;
 
-class WinApiPlugin final : public Plugin
+class BasicPlugin final : public Plugin
 {
 public:
-    WinApiPlugin(WinApiPluginManager& manager) : mManager(manager) {}
-    ~WinApiPlugin() {}
+    BasicPlugin(PluginManager& manager) : Plugin(manager), mManager(manager) {}
+    ~BasicPlugin() {}
 
-    void About() const override final;
-    int MajorVersion() const override final { return PLUGIN_VERSION_MAJOR; }
+    const char *PluginName() const override final;
+    int MajorVersion() const override final;
     int MinorVersion() const override final;
     int PatchVersion() const override final;
     const char *CompiledDatetime() const override final;
     const char *CompiledTime() const override final;
-    const char *FilePath() const override final;
+    void About() const override final;
 
 protected:
-    WinApiPluginManager& mManager;
+    PluginManager& mManager;
 };

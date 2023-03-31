@@ -12,15 +12,18 @@
 #include <exception>
 #include <memory>
 
-#include <basic_plugin_manager_host.hpp>
-#include <winapi_plugin_manager_host.hpp>
+#include <plugin_manager_host.hpp>
+
+#include <basic_plugin.hpp>
 
 int main(int, char**)
 {
     try
     {
-       BasicPluginManager basicPluginManager;
-       WinApiPluginManager winapiPluginManager;
+        PluginManager pluginManager;
+        pluginManager.
+      
+
     }
     catch(const std::exception& e)
     {

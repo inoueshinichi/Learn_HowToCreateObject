@@ -1,33 +1,35 @@
-#include <plugin_manager_host.hpp>
+#include <plugin_manager_base_host.hpp>
 
 #include <algorithm>
 
-PluginManager::DllMap &PluginManager::GetDllMap()
+// static
+PluginManagerBase::DllMap &PluginManagerBase::GetDllMap()
 {
-    static PluginManager::DllMap sDllMap;
+    static PluginManagerBase::DllMap sDllMap;
     return sDllMap;
 }
 
-std::mutex &PluginManager::GetMutex()
+// static
+std::mutex &PluginManagerBase::GetMutex()
 {
     static std::mutex sMtx;
     return sMtx;
 }
 
-// std::recursive_mutex &PluginManager::GetRecMutex()
+// std::recursive_mutex &PluginManagerBase::GetRecMutex()
 // {
 //     static std::recursive_mutex sRMtx;
 //     return sRMtx;
 // }
 
-// void PluginManager::AddRef(const std::string &keyPath, DllMap &dllMap)
+// void PluginManagerBase::AddRef(const std::string &keyPath, DllMap &dllMap)
 // {
 //     auto &sRMtx = GetRecMutex();
 //     std::lock_guard<std::recursive_mutex> locker(sRMtx);
 //     dllMap[keyPath].mRefCount += 1;
 // }
 
-// bool PluginManager::Release(const std::string &keyPath, DllMap &dllMap)
+// bool PluginManagerBase::Release(const std::string &keyPath, DllMap &dllMap)
 // {
 //     auto &sRMtx = GetRecMutex();
 //     std::lock_guard<std::recursive_mutex> locker(sRMtx);
@@ -58,11 +60,9 @@ std::mutex &PluginManager::GetMutex()
 //     return true;
 // }
 
-std::intptr_t PluginManager::LoadDll(const std::string &path)
+// static
+bool PluginManagerBase::LoadDll(const std::string &path)
 {
-    // auto &sRMtx = GetRecMutex();
-    // std::lock_guard<std::recursive_mutex> locker(sRMtx);
-
     auto &sMtx = GetMutex();
     std::lock_guard<std::mutex> locker(sMtx);
 
@@ -71,7 +71,8 @@ std::intptr_t PluginManager::LoadDll(const std::string &path)
     if (iter != dllMap.end())
     {
         // AddRef(path, dllMap);
-        return (*iter).second.mHandle;
+        // return (*iter).second.mHandle;
+        return true;
     }
 
     std::intptr_t handle;
@@ -98,7 +99,8 @@ std::intptr_t PluginManager::LoadDll(const std::string &path)
 
         LocalFree(lpMsgBuf);
 
-        return NULL;
+        // return NULL;
+        return false;
     }
 
 #elif defined(__APPLE__) && defined(__MACH__)
@@ -113,14 +115,13 @@ std::intptr_t PluginManager::LoadDll(const std::string &path)
     // info.RefCount = 0;
     dllMap[path] = info;
     // AddRef(path, dllMap);
-    return handle;
+    // return handle;
+    return true;
 }
 
-void PluginManager::UnloadDll(const std::string &path)
+// static
+void PluginManagerBase::UnloadDll(const std::string &path)
 {
-    // auto &sRMtx = GetRecMutex();
-    // std::lock_guard<std::recursive_mutex> locker(sRMtx);
-
     auto &sMtx = GetMutex();
     std::lock_guard<std::mutex> locker(sMtx);
 
@@ -153,7 +154,8 @@ void PluginManager::UnloadDll(const std::string &path)
     }
 }
 
-void PluginManager::UnloadDllAll()
+// static
+void PluginManagerBase::UnloadDllAll()
 {
     auto& dllMap = GetDllMap();
     std::unordered_set<std::string> dllFilePaths;
@@ -168,3 +170,46 @@ void PluginManager::UnloadDllAll()
     }
 }
 
+
+void PluginManagerBase::RemovePlugin(std::intptr_t id)
+{
+    auto iter = std::find(mPluginMap.begin(), mPluginMap.end(), id);
+    if (iter != mPluginMap.end())
+    {
+        PluginInfo &info = (*iter).second;
+        if (info.mDllInfo) // Dllファイルがまだ有効
+        {
+            auto iter_p_info = std::find(info.mDllInfo->mPluginInfos.begin(), info.mDllInfo->mPluginInfos.end(), &info);
+            if (iter_p_info != info.mDllInfo->mPluginInfos.end())
+            {
+                std::iter_swap(iter_p_info, info.mDllInfo->mPluginInfos.end());
+                info.mDllInfo->mPluginInfos.pop_back(); // 削除
+            }
+        }
+
+        // 関連するPluginがないDllファイルは解放
+        if (info.mDllInfo->mPluginInfos.size() == 0)
+        {
+            UnloadDll(info.mDllFilePath);
+        }
+
+        mPluginMap.erase(iter);
+    }
+}
+
+void PluginManagerBase::ClearPlugins()
+{
+    std::vector<std::intptr_t> ids;
+    ids.reserve(mPluginMap.size());
+    for (auto &pair : mPluginMap)
+    {
+        ids.push_back(pair.first);
+    }
+
+    for (auto &id : ids)
+    {
+        RemovePlugin(id);
+    }
+
+    mPluginMap.clear();
+}

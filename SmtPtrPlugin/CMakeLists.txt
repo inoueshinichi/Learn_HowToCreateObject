@@ -4,15 +4,6 @@ cmake_minimum_required(VERSION 3.14.6)
 # Plugin Dll
 ################################
 
-# Policy
-if(POLICY CMP0025)
-    cmake_policy(SET CMP0025 NEW) # AppleClang
-endif()
-
-if(POLICY CMP0115)
-    cmake_policy(SET CMP0115 NEW) # explicit source symbol
-endif()
-
 # Plugin Directory
 set(DLL_PLUGIN_TARGET "")
 if(WIN32)
@@ -33,33 +24,28 @@ endif()
 ################################
 # Host Exe
 ################################
-# Host Source
-set(HOST_EXE_SOURCE main_plugin_host.cpp)
-get_filename_component(HOST_EXE_NAME ${HOST_EXE_SOURCE} NAME_WE)
 
-# Target Name
-set(BUILD_TARGET ${HOST_EXE_NAME})
+include(../is_test_case.cmake)
 
-# Project
-project(${BUILD_TARGET} LANGUAGES C CXX VERSION 0.1.0)
-
-# Include Dir
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-
-# Exe
-add_executable(${BUILD_TARGET} ${HOST_EXE_SOURCE})
+# Headers
+file(GLOB BUILD_HEADERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} /Host/*.hpp)
 
 # Sources
-target_sources(${BUILD_TARGET} PRIVATE
-    plugin_host.hpp
-    plugin_host.cpp
-    plugin_manager_host.hpp
-    plugin_manager_host.cpp
-)
+file(GLOB BUILD_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} /Host/*.cpp)
 
-if(MSVC)
-    target_sources(${BUILD_TARGET} PRIVATE
-        winapi_plugin_manager_host.hpp
-        winapi_plugin_manager_host.cpp
-    )
-endif()
+# Include Dir
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Host)
+
+# if(MSVC)
+#     # Headers
+#     file(GLOB MSVC_HEADERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} /Host/Win32/*.hpp)
+#     list(APPEND BUILD_HEADERS ${MSVC_HEADERS})
+#     # Sources
+#     file(GLOB MSVC_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} /Host/Win32/*.cpp)
+#     list(APPEND BUILD_SOURCES ${MSVC_SOURCES})
+
+#     # Include Dir
+#     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Host/Win32)
+# endif()
+
+make_is_test_case("${BUILD_HEADERS}" "${BUILD_SOURCES}" main_plugin_host.cpp)

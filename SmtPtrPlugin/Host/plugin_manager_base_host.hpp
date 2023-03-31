@@ -32,9 +32,6 @@
 #include <mutex>
 #include <vector>
 
-// #include <exception>
-// #include <stdexcept>
-
 #include <plugin_host.hpp>
 
 class DllInfo;
@@ -54,7 +51,6 @@ struct PluginInfo
 struct DllInfo
 {
     std::intptr_t mHandle;
-    // int mRefCount; // Pluginから参照されている数
     std::vector<PluginInfo*> mPluginInfos; // Dllを参照しているPluginへのポインタ
 };
 
@@ -63,89 +59,54 @@ struct DllInfo
  * @note 派生クラスはシングルトン
  *
  */
-class PluginManager
+class PluginManagerBase
 {
 public:
     using PluginMap = std::map<std::intptr_t, PluginInfo>;
     using DllMap = std::unordered_map<std::string, DllInfo>;
 
-    static std::intptr_t LoadDll(const std::string &path);
+    static bool LoadDll(const std::string &path);
     static void UnloadDll(const std::string &path);
     static void UnloadDllAll();
+
+// protected:
+    PluginManagerBase() {}
+    virtual ~PluginManagerBase() { /*ClearPlugins();*/ }
 
 protected:
     friend class Plugin;
     PluginMap mPluginMap;
 
-    PluginManager() {}
-    virtual ~PluginManager() { ClearPlugins(); }
-
-    template <typename PLUGIN_MANAGER>
-    std::intptr_t AddPlugin(const std::string &path, const std::string &exportFactoryName, PLUGIN_MANAGER &manager);
+    template <typename PLUGIN, typename PLUGIN_MANAGER>
+    std::intptr_t AddPlugin(const std::string &path, const std::string &exportFactoryName, std::shared_ptr<PLUGIN> &pluginPtr, PLUGIN_MANAGER &manager);
+    
     void RemovePlugin(std::intptr_t id);
+
     void ClearPlugins();
 
 private:
     static DllMap &GetDllMap();
     static std::mutex &GetMutex();
-    // static std::recursive_mutex &GetRecMutex();
 
+    // static std::recursive_mutex &GetRecMutex();
     // static void AddRef(const std::string &keyPath, DllMap &dllMap);
     // static bool Release(const std::string &keyPath, DllMap &dllMap);
 };
 
-void PluginManager::ClearPlugins()
-{
-    std::vector<std::intptr_t> ids;
-    ids.reserve(mPluginMap.size());
-    for (const auto& pair : mPluginMap)
-    {
-        ids.push_back(pair.first);
-    }
-
-    for (const auto& id : ids)
-    {
-        RemovePlugin(id);
-    }
-
-    mPluginMap.clear();
-}
-
-void PluginManager::RemovePlugin(std::intptr_t id)
-{
-    auto iter = std::find(mPluginMap.begin(), mPluginMap.end(), id);
-    if (iter != mPluginMap.end())
-    {
-        PluginInfo &info = (*iter).second;
-        if (info.mDllInfo) // Dllファイルがまだ有効
-        {
-            std::iter_swap(&info, info.mDllInfo->mPluginInfos.end());
-            info.mDllInfo->mPluginInfos.pop_back(); // 削除
-        }
-
-        // 関連するPluginがないDllファイルは解放
-        if (info.mDllInfo->mPluginInfos.size() == 0)
-        {
-            UnloadDll(info.mDllFilePath);
-        }
-
-        mPluginMap.erase(iter);
-    }
-}
-
-template <typename PLUGIN_MANAGER>
-std::intptr_t PluginManager::AddPlugin(const std::string &path, const std::string &exportFactoryName, PLUGIN_MANAGER &manager)
+template <typename PLUGIN, typename PLUGIN_MANAGER>
+std::intptr_t 
+PluginManagerBase::AddPlugin(const std::string &path, const std::string &exportFactoryName, 
+    std::shared_ptr<PLUGIN> &pluginPtr, PLUGIN_MANAGER &manager)
 {
     std::intptr_t handle;
-    handle = PluginManager::LoadDll(path); // Dllファイルは, 確保 or 再利用
+    handle = PluginManagerBase::LoadDll(path); // Dllファイルは, 確保 or 再利用
     if (handle == NULL)
     {
         return NULL;
     }
 
     // ファクトリ関数
-    using CreatorPtr = std::shared_ptr<Plugin> (*)(PLUGIN_MANAGER &);
-    // std::function<CreatorPtr> creator;
+    using CreatorPtr = std::shared_ptr<PLUGIN> (*)(PLUGIN_MANAGER &);
     CreatorPtr creator;
 
 #if defined(_MSC_VER)
@@ -163,7 +124,7 @@ std::intptr_t PluginManager::AddPlugin(const std::string &path, const std::strin
 
 #endif
 
-    std::shared_ptr<Plugin> pluginPtr;
+    // std::shared_ptr<PLUGIN> pluginPtr;
     pluginPtr = creator(manager); // New Plugin Instance
     /**
      * @note この時点でプラグインインスタンスはDLLファイルから切り離されている
@@ -172,7 +133,7 @@ std::intptr_t PluginManager::AddPlugin(const std::string &path, const std::strin
     auto &dllMap = GetDllMap();
     
     PluginInfo info;
-    info.mPluginPtr = pluginPtr;   // Pluginスマートポインタを外部に公開しても生存期間は, このポインタが管理する.
+    info.mPluginPtr = std::static_pointer_cast<Plugin>(pluginPtr); // Pluginスマートポインタを外部に公開しても生存期間は, このポインタが管理する.
     info.mDllInfo = &dllMap[path]; // 所属先のDllInfoへのポインタ
     info.mDllFilePath = path;
     info.mCompiledDatetime = pluginPtr->CompiledDatetime();
