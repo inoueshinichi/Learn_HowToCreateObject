@@ -59,11 +59,16 @@ target_include_directories(${DLL_PLUGIN_TARGET}
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/winapi_plugin
 )
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../Host)
+file(GLOB HOST_HEADERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} 
+    ../Host/*.hpp
+)
 
 # Target Headers and Sources
 target_sources(${DLL_PLUGIN_TARGET}
     PRIVATE ${PLUGIN_HEADERS}
     PRIVATE ${PLUGIN_SOURCES}
+    PRIVATE ${HOST_HEADERS}
 )
 
 # Win API libararies

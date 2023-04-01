@@ -9,6 +9,7 @@
  * 
  */
 #pragma once
+
 #include <defs.hpp>
 
 #include <plugin_host.hpp>
@@ -22,7 +23,7 @@
 class WinApiPlugin final : public Plugin
 {
 public:
-    WinApiPlugin(PluginManager<WinApiPlugin>& manager) : mManager(manager) {}
+    WinApiPlugin(PluginManager<WinApiPlugin>& manager) : Plugin(manager), mManager(manager) {}
     ~WinApiPlugin() {}
 
     const char *PluginName() const override final { return "WinApiPlugin"; }

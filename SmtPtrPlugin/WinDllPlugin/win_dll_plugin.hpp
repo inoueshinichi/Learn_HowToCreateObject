@@ -1,16 +1,15 @@
 /**
- * @file win_api_plugin.hpp
+ * @file win_dll_plugin.hpp
  * @author Shinichi Inoue (inoue.shinichi.1800@gmail.com)
  * @brief 
  * @version 0.1
- * @date 2023-03-24
+ * @date 2023-04-01
  * 
  * @copyright Copyright (c) 2023
  * 
  */
 #pragma once
 
-// Plugin
 #include <defs.hpp>
 
 // Host
@@ -22,15 +21,7 @@
 class WinApiPlugin;
 template class PluginManager<WinApiPlugin>;
 
-// Plugin C Interface
-#if defined(__cplusplus)
 extern "C"
 {
-#endif
-
-    // WinApi Plugin
-    WIN_PLUGIN_API std::shared_ptr<WinApiPlugin> CreateWinApiPlugin(PluginManager<WinApiPlugin> &manager);
-
-#if defined(__cplusplus)
+    PLUGIN_API std::shared_ptr<WinApiPlugin> CreateWinApiPlugin(PluginManager<WinApiPlugin> &manager);
 }
-#endif

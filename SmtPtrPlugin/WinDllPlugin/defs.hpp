@@ -10,18 +10,20 @@
  */
 #pragma once
 
-// Version
-#include <version.hpp>
-#include <windows_version.hpp>
-
-#ifdef defined(WIN_PLUGIN_EXPORTS) || defined(WIN_PLUGIN_dbg_EXPORTS)
-#   define WIN_PLUGIN_API __declspec(dllexport)
+#if defined(PLUGIN_EXPORTS) || defined(PLUGIN_dbg_EXPORTS)
+#   define PLUGIN_API __declspec(dllexport)
 #else
-#   define WIN_PLUGIN_API __declspec(dllimport)
+#   define PLUGIN_API __declspec(dllimport)
 #endif
 
 #if defined(_MSC_VER)
 // __func__の定義
 #   define __func__ __FUNCTION__
 #endif
+
+// Dll Plugin Version
+#include <version.hpp>
+
+// Windows Version
+#include <windows_version.hpp>
 
