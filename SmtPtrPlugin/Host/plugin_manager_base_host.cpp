@@ -203,7 +203,7 @@ void PluginManagerBase::ClearPlugins()
     ids.reserve(mPluginMap.size());
     for (auto &pair : mPluginMap)
     {
-        ids.push_back(pair.first);
+        ids.push_back(const_cast<std::intptr_t>(pair.first));
     }
 
     for (auto &id : ids)

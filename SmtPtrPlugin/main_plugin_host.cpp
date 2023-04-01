@@ -20,10 +20,8 @@ int main(int, char**)
 {
     try
     {
-        PluginManager pluginManager;
-        pluginManager.
-      
-
+        PluginManager<BasicPlugin> basicPluginManager;
+        // std::shared_ptr<BasicPlugin> basicPluginPtr = basicPluginManager.GetPlugin();
     }
     catch(const std::exception& e)
     {

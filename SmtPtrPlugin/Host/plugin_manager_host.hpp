@@ -15,35 +15,54 @@
 #include <sstream>
 #include <exception>
 #include <stdexcept>
+#include <iostream>
 
 #include <plugin_manager_base_host.hpp>
 
-#define STRMACRO(name) #name
+#include <plugin_tag.hpp>
 
-
+template <typename PLUGIN>
 class PluginManager final : public PluginManagerBase
 {
 public:
-    template <typename PLUGIN>
     std::shared_ptr<PLUGIN> GetPlugin(const std::string &path, const std::string &exportFactoryName)
     {
-        std::shared_ptr<PLUGIN> pluginPtr;
-        std::intptr_t id = PluginManagerBase::AddPlugin(path, exportFactoryName, pluginPtr, *this);
+        std::intptr_t id;
+        std::shared_ptr<Plugin> pluginPtr = PluginManagerBase::AddPlugin(id, path, exportFactoryName, *this);
         if (id == NULL)
         {
             std::ostringstream oss;
             oss << "No plugin creator: "
-                << "std::shared_ptr<" << STRMACRO(PLUGIN) << "> "
-                << exportFactoryName << "(PluginManager&) in " << path;
+                << "std::shared_ptr<" << PluginTag<PLUGIN>::str << "> "
+                << exportFactoryName << "(PluginManager<" << PluginTag<PLUGIN>::str ">&) in " << path;
             throw std::runtime_error(oss.str());
         }
 
-        return pluginPtr;
+        if (!std::dynamic_pointer_cast<PLUGIN>(pluginPtr))
+        {
+            std::ostringstream oss;
+            oss << "Can't dynamic_pointer_cast<" << PluginTag<PLUGIN>::str << ">(std::shared_ptr<Plugin>)";
+            throw std::runtime_error(oss.str());
+        }
+
+        return std::dynamic_pointer_cast<PLUGIN>(pluginPtr);
+    }
+
+    void ErasePlugin(std::shared_ptr<PLUGIN> &plugin)
+    {
+        std::intptr_t id = GetIdFromPlugin(std::static_pointer_cast<Plugin>(plugin));
+        if (!id)
+        {
+            return;
+        }
+        RemovePlugin(id);
     }
 
 // protected:
-    PluginManager() {}
-    ~PluginManager() {}
+    PluginManager() { std::cout << "Constructor PluginManager<" << PluginTag<PLUGIN>::str << ">" << std::endl; }
+    ~PluginManager() { std::cout << "Destructor ~PluginManager<" << PluginTag<PLUGIN>::str << ">" << std::endl;
+        
+    }
 
 private:
 };

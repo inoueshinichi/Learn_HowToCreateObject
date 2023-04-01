@@ -15,12 +15,10 @@
 
 #include <memory>
 
-class PluginManager;
-
 class BasicPlugin final : public Plugin
 {
 public:
-    BasicPlugin(PluginManager& manager) : Plugin(manager), mManager(manager) {}
+    BasicPlugin(PluginManager<BasicPlugin>& manager) : Plugin(manager), mManager(manager) {}
     ~BasicPlugin() {}
 
     const char *PluginName() const override final;
@@ -32,5 +30,5 @@ public:
     void About() const override final;
 
 protected:
-    PluginManager& mManager;
+    PluginManager<BasicPlugin>& mManager;
 };
