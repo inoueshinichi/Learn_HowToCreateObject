@@ -9,40 +9,19 @@ set(DLL_PLUGIN_TARGET ${DIRNAME} PARENT_SCOPE) # 親スコープの変数
 
 message(STATUS "DLL_PLUGIN_TARGET: ${DLL_PLUGIN_TARGET}")
 
+
+
 # Version Management
+set(CMAKE_PLUGIN_AUTHOR "Shinichi Inoue")
+set(CMAKE_PLUGIN_EMAIL "inoue.shinichi.1800@gmail.com")
+set(CMAKE_PLUGIN_PLATFORM "")
+set(CMAKE_PLUGIN_PLATFORM_VERSION)
+set(CMAKE_PLUGIN_ARCHITECTURE)
+set(CMAKE_PLUGIN_ARCHITECTURE_ADDRESS_VOID_LENGTH)
+set(CMAKE_PLUGIN_GENERATOR)
 set(CMAKE_PLUGIN_VERSION_MAJOR 0)
 set(CMAKE_PLUGIN_VERSION_MINOR 1)
 set(CMAKE_PLUGIN_VERSION_PATCH 0)
-set(CMAKE_PLUGIN_AUTHOR "Shinichi Inoue")
-set(CMAKE_PLUGIN_EMAIL "inoue.shinichi.1800@gmail.com")
-
-# 64bit or 32bit Architecture
-if(${CMAKE_SIZEOF_VOID_P} EQUAL 8)
-    message(STATUS "64-bit arch in Windows.")
-else()
-    message(STATUS "32-bit arch in Windows.")
-endif()
-
-# Windows SDK (OS Version)
-message(STATUS "Windows SDK Version (system-default): ${CMAKE_SYSTEM_VERSION}")
-
-# Windows SDK Path
-message(STATUS "Windows SDK Path; UniversalCRTSdkDir: $ENV{UniversalCRTSdkDir}")
-
-# Windows SDK General Include Path
-message(STATUS "Windows SDK General Include Path: $ENV{UniversalCRTSdkDir}\\Include\\ucrt")
-
-# Windows SDK Specified Path
-message(STATUS "Windows SDK Specified Path above win 10 (maybe empty): ${CMAKE_WINDOWS_KITS_10_DIR}")
-
-# CMake Target Platform Version (offered by MSVC)
-message(STATUS "CMake Target Platform Version (offered by MSVC): ${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}")
-
-# Windows SDK Specified Include Path
-message(STATUS "Windows SDK Specified(${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}) Include Path: $ENV{UniversalCRTSdkDir}\\Include\\${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}\\ucrt")
-
-# MSVC Linker Path
-message(STATUS "MSVC Linker Path: ${CMAKE_LINKER}") 
 
 
 # Project
@@ -64,20 +43,27 @@ configure_file(version.hpp.in version.hpp @ONLY NEWLINE_STYLE CRLF) # Windows
 include_directories(${CMAKE_CURRENT_BINARY_DIR}) # Include version.hpp
 
 # Plugin Headers
-file(GLOB WIN_PLUGIN_HEADERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./*.hpp) # Win
+file(GLOB PLUGIN_HEADERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} 
+    ./*.hpp
+    ./winapi_plugin/*.hpp
+)
 
 # Plugin Sources
-file(GLOB WIN_PLUGIN_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./*.cpp) # Win
+file(GLOB PLUGIN_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} 
+    ./*.cpp
+    ./winapi_plugin/*.cpp
+)
 
 # Include Directories
 target_include_directories(${DLL_PLUGIN_TARGET} 
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/winapi_plugin
 )
 
 # Target Headers and Sources
 target_sources(${DLL_PLUGIN_TARGET}
-    PRIVATE ${WIN_PLUGIN_HEADERS}
-    PRIVATE ${WIN_PLUGIN_SOURCES}
+    PRIVATE ${PLUGIN_HEADERS}
+    PRIVATE ${PLUGIN_SOURCES}
 )
 
 # Win API libararies
@@ -114,6 +100,7 @@ endif()
 target_compile_definitions(${DLL_PLUGIN_TARGET} PRIVATE
     # MSVC
     $<$<CXX_COMPILER_ID:MSVC>:WIN32 _WINDOWS _CRT_NONSTDC_NO_DEPRECATE _CRT_SECURE_NO_WARNINGS _USE_MATH_DEFINES>
+    $<$<CXX_COMPILER_ID:MSVC>:UNICODE _UNICODE> # UTF-16
     $<$<AND:$<CXX_COMPILER_ID:MSVC>,$<CONFIG:Release>>:NDEBUG>
     $<$<AND:$<CXX_COMPILER_ID:MSVC>,$<CONFIG:Debug>>:_DEBUG>
     $<$<AND:$<CXX_COMPILER_ID:MSVC>,$<CONFIG:MinSizeRel>>:NDEBUG>

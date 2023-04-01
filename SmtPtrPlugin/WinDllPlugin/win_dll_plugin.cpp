@@ -1,6 +1,6 @@
 #include <win_dll_plugin.hpp>
 
-std::shared_ptr<WinApiPlugin> CreateWinApiPlugin(PluginManager<WinApi>& manager)
+std::shared_ptr<WinApiPlugin> CreateWinApiPlugin(PluginManager<WinApiPlugin>& manager)
 {
     return std::make_shared<WinApiPlugin>(manager);
 }

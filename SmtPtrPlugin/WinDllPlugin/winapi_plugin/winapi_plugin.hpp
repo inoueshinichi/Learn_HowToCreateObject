@@ -12,25 +12,27 @@
 #include <defs.hpp>
 
 #include <plugin_host.hpp>
+#include <plugin_manager_host.hpp>
 
 #include <memory>
-
-class WinApiPluginManager;
+#include <iostream>
+#include <sstream>
+#include <string>
 
 class WinApiPlugin final : public Plugin
 {
 public:
-    WinApiPlugin(WinApiPluginManager& manager) : mManager(manager) {}
+    WinApiPlugin(PluginManager<WinApiPlugin>& manager) : mManager(manager) {}
     ~WinApiPlugin() {}
 
-    void About() const override final;
-    int MajorVersion() const override final { return PLUGIN_VERSION_MAJOR; }
-    int MinorVersion() const override final;
-    int PatchVersion() const override final;
-    const char *CompiledDatetime() const override final;
-    const char *CompiledTime() const override final;
-    const char *FilePath() const override final;
+    const char *PluginName() const override final { return "WinApiPlugin"; }
+    int MajorVersion() const override final { return std::stoi(PLUGIN_VERSION_MAJOR); }
+    int MinorVersion() const override final { return std::stoi(PLUGIN_VERSION_MINOR); }
+    int PatchVersion() const override final { return std::stoi(PLUGIN_VERSION_PATCH); }
+    const char *CompiledDatetime() const override final { return PLUGIN_COMPILED_DATETIME; }
+    const char *CompiledTime() const override final { return PLUGIN_COMPILED_TIME; }
+    void About() const override final { std::cout << "About " << PluginName() << std::endl; }
 
 protected:
-    WinApiPluginManager& mManager;
+    PluginManager<WinApiPlugin>& mManager;
 };

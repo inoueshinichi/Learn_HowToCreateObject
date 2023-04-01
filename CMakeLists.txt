@@ -18,10 +18,18 @@ if (POLICY CMP0115)
  cmake_policy(SET CMP0115 NEW) # explicit source symbol
 endif()
 
+
+
 ###############################################################################
-# Device Check
+# Host PC
 ###############################################################################
-# Platform & Processor
+
+# Host
+message(STATUS "Host OS: ${CMAKE_HOST_SYSTEM_NAME}")
+message(STATUS "Host OS Version: ${CMAKE_HOST_SYSTEM_VERSION}")
+message(STATUS "Host System Processor: ${CMAKE_HOST_SYSTEM_PROCESSOR}")
+
+# Architecture Name
 set(HOST_ARCH "")
 if (UNIX)
     execute_process(COMMAND uname -m OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE HOST_ARCH) # OUTPUT_STRIP_TRAILING_WHITESPACE : 改行を省く
@@ -31,21 +39,71 @@ if (UNIX)
     if(${HOST_ARCH} STREQUAL "")
         message(FATAL_ERROR "Not found architecture symbol in Unix.")
     endif()
-endif()
-
-if(WIN32)
-    message(STATUS "Platform: Windows ${CMAKE_SYSTEM_VERSION}")
+else() # Windows
     set(HOST_ARCH $ENV{PROCESSOR_ARCHITECTURE})
     if(${HOST_ARCH} STREQUAL "")
         message(FATAL_ERROR "Not found architecture symbol in Windows.")
     endif()
-elseif(UNIX AND NOT APPLE)
+endif()
+
+message(STATUS "Host Architecture: ${HOST_ARCH}")
+
+# # 64bit or 32bit
+# set(HOST_ARCH_BITS "")
+# if(${CMAKE_SIZEOF_VOID_P} EQUAL 8)
+#     message(STATUS "64-bit arch.")
+#     set(HOST_ARCH_BITS "64")
+# else()
+#     message(STATUS "32-bit arch.")
+#     set(HOST_ARCH_BITS "32")
+# endif()
+
+
+
+
+
+# Platform
+if(WIN32) # Windows
+   
+    # Windows SDK (OS Version)
+    message(STATUS "Windows SDK Version (system-default): ${CMAKE_SYSTEM_VERSION}")
+
+    # Windows SDK Path
+    message(STATUS "Windows SDK Path; UniversalCRTSdkDir: $ENV{UniversalCRTSdkDir}")
+
+    # Windows SDK General Include Path
+    message(STATUS "Windows SDK General Include Path: $ENV{UniversalCRTSdkDir}\\Include\\ucrt")
+
+    # Windows SDK Specified Path
+    message(STATUS "Windows SDK Specified Path above win 10 (maybe empty): ${CMAKE_WINDOWS_KITS_10_DIR}")
+
+    # CMake Target Platform Version (offered by MSVC)
+    message(STATUS "CMake Target Platform Version (offered by MSVC): ${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}")
+
+    # Windows SDK Specified Include Path
+    message(STATUS "Windows SDK Specified(${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}) Include Path: $ENV{UniversalCRTSdkDir}\\Include\\${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}\\ucrt")
+
+   
+
+elseif(UNIX AND NOT APPLE) # Linux
     message(STATUS "Platform: Linux ${CMAKE_SYSTEM_VERSION}")
-elseif(APPLE)
+elseif(APPLE) # Darwin(macOS)
     message(STATUS "Platform: macOS ${CMAKE_SYSTEM_VERSION}")
 else()
     message(FATAL_ERROR "Platform: Not match platforms [Windows, macOS, Linux]. Given platform is ${CMAKE_SYSTEM_NAME}")
 endif()
+
+if(MSVC)
+    message(STATUS "CMAKE_VS_SDK_INCLUDE_DIRECTORIES: ${CMAKE_VS_SDK_INCLUDE_DIRECTORIES}")
+    message(STATUS "CMAKE_VS_SDK_LIBRARY_DIRECTORIES: ${CMAKE_VS_SDK_LIBRARY_DIRECTORIES}")
+    message(STATUS "CMAKE_VS_SDK_REFERENCE_DIRECTORIES: ${CMAKE_VS_SDK_REFERENCE_DIRECTORIES}")
+    message(STATUS "CMAKE_VS_SDK_SOURCE_DIRECTORIES: ${CMAKE_VS_SDK_SOURCE_DIRECTORIES}")
+    message(STATUS "CMAKE_VS_SDK_EXECUTABLE_DIRECTORIES: ${CMAKE_VS_SDK_EXECUTABLE_DIRECTORIES}")
+    message(STATUS "CMAKE_VS_SDK_EXCLUDE_DIRECTORIES: ${CMAKE_VS_SDK_EXCLUDE_DIRECTORIES}")
+    # MSVC Linker Path
+    message(STATUS "MSVC Linker Path: ${CMAKE_LINKER}") 
+endif()
+
 
 if(APPLE)
     set(OSX_ARCHITECTURE "")
@@ -62,9 +120,20 @@ message(STATUS "Host arch: ${HOST_ARCH}")
 message(STATUS "CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR}") # コンパイル対象のプロセッサ
 message(STATUS "CMAKE_HOST_SYSTEM_PROCESSOR: ${CMAKE_HOST_SYSTEM_PROCESSOR}") # 実行しているプロセッサ
 
+
 # Generator
 # https://cmake.org/cmake/help/latest/manual/cmake-generators.7.html
+set(HOST_GENERATOR ${CMAKE_GENERATOR})
 message(STATUS "Generator: ${CMAKE_GENERATOR}")
+
+
+###############################################################################
+# Target PC
+###############################################################################
+# Target
+message(STATUS "Target OS: ${CMAKE_SYSTEM_NAME}")
+message(STATUS "Target OS Version: ${CMAKE_SYSTEM_VERSION}")
+message(STATUS "Target System Processor: ${CMAKE_SYSTEM_PROCESSOR}")
 
 ###############################################################################
 # Top-level Project Name

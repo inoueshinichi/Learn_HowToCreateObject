@@ -19,6 +19,9 @@
 
 #include <memory>
 
+class WinApiPlugin;
+template class PluginManager<WinApiPlugin>;
+
 // Plugin C Interface
 #if defined(__cplusplus)
 extern "C"

@@ -14,6 +14,9 @@
 #include <plugin_manager_host.hpp>
 
 #include <memory>
+#include <iostream>
+#include <sstream>
+#include <string>
 
 class BasicPlugin final : public Plugin
 {
@@ -21,13 +24,13 @@ public:
     BasicPlugin(PluginManager<BasicPlugin>& manager) : Plugin(manager), mManager(manager) {}
     ~BasicPlugin() {}
 
-    const char *PluginName() const override final;
-    int MajorVersion() const override final;
-    int MinorVersion() const override final;
-    int PatchVersion() const override final;
-    const char *CompiledDatetime() const override final;
-    const char *CompiledTime() const override final;
-    void About() const override final;
+    const char *PluginName() const override final { return "BasicPlugin"; }
+    int MajorVersion() const override final { return 0; }
+    int MinorVersion() const override final { return 1; }
+    int PatchVersion() const override final { return 0; }
+    const char *CompiledDatetime() const override final { return "Host Compliled Datetime"; }
+    const char *CompiledTime() const override final { return "Host Compiled Time"; }
+    void About() const override final { std::cout << "About " << PluginName() << std::endl; }
 
 protected:
     PluginManager<BasicPlugin>& mManager;
