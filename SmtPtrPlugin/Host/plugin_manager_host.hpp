@@ -34,7 +34,7 @@ public:
             std::ostringstream oss;
             oss << "No plugin creator: "
                 << "std::shared_ptr<" << PluginTag<PLUGIN>::str << "> "
-                << exportFactoryName << "(PluginManager<" << PluginTag<PLUGIN>::str ">&) in " << path;
+                << exportFactoryName << "(PluginManager<" << PluginTag<PLUGIN>::str << ">&) in " << path;
             throw std::runtime_error(oss.str());
         }
 

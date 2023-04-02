@@ -80,8 +80,8 @@ protected:
     friend class Plugin;
     PluginMap mPluginMap;
 
-    template <typename PLUGIN, typename PLUGIN_MANAGER>
-    std::shared_ptr<PLUGIN> AddPlugin(std::intptr_t &id, const std::string &path, const std::string &exportFactoryName, PLUGIN_MANAGER &manager);
+    template <typename PLUGIN_MANAGER>
+    std::shared_ptr<Plugin> AddPlugin(std::intptr_t &id, const std::string &path, const std::string &exportFactoryName, PLUGIN_MANAGER &manager);
 
     void RemovePlugin(std::intptr_t id);
 
@@ -103,8 +103,8 @@ private:
     // static bool Release(const std::string &keyPath, DllMap &dllMap);
 };
 
-template <typename PLUGIN, typename PLUGIN_MANAGER>
-std::shared_ptr<PLUGIN>
+template <typename PLUGIN_MANAGER>
+std::shared_ptr<Plugin>
 PluginManagerBase::AddPlugin(std::intptr_t &id, const std::string &path, const std::string &exportFactoryName, PLUGIN_MANAGER &manager)
 {
     std::intptr_t handle;
@@ -112,21 +112,22 @@ PluginManagerBase::AddPlugin(std::intptr_t &id, const std::string &path, const s
     if (handle == NULL)
     {
         id = NULL;
-        return std::shared_ptr<PLUGIN>(); // nullptr
+        return std::shared_ptr<Plugin>(); // nullptr
     }
 
     // ファクトリ関数
-    using CreatorPtr = std::shared_ptr<PLUGIN> (*)(PLUGIN_MANAGER &);
+    using CreatorPtr = std::shared_ptr<Plugin> (*)(PLUGIN_MANAGER &);
     CreatorPtr creator;
 
 #if defined(_MSC_VER)
 
     // プラグインオブジェクトのファクトリ関数のポインタを取得
-    creator = (CreatorPtr)::GetProcAddress((HMODULE)handle, _T(exportFactoryName.c_str()));
+    creator = (CreatorPtr)::GetProcAddress((HMODULE)handle, exportFactoryName.c_str());
+
     if (creator == NULL)
     {
         id = NULL;
-        return std::shared_ptr<PLUGIN>(); // nullptr
+        return std::shared_ptr<Plugin>(); // nullptr
     }
 
 #elif defined(__APPLE__) && defined(__MACH__)
@@ -135,7 +136,7 @@ PluginManagerBase::AddPlugin(std::intptr_t &id, const std::string &path, const s
 
 #endif
 
-    std::shared_ptr<PLUGIN> pluginPtr;
+    std::shared_ptr<Plugin> pluginPtr;
     pluginPtr = creator(manager); // New Plugin Instance
     /**
      * @note この時点でプラグインインスタンスはDLLファイルから切り離されている
@@ -144,7 +145,7 @@ PluginManagerBase::AddPlugin(std::intptr_t &id, const std::string &path, const s
     auto &dllMap = GetDllMap();
     
     PluginInfo info;
-    info.mPluginPtr = std::static_pointer_cast<Plugin>(pluginPtr); // Pluginスマートポインタを外部に公開しても生存期間は, このポインタが管理する.
+    info.mPluginPtr = pluginPtr; // Pluginスマートポインタを外部に公開しても生存期間は, このポインタが管理する.
     info.mDllInfo = &dllMap[path]; // 所属先のDllInfoへのポインタ
     info.mDllFilePath = path;
     info.mCompiledDatetime = pluginPtr->CompiledDatetime();

@@ -24,6 +24,3 @@
 // Dll Plugin Version
 #include <version.hpp>
 
-// Windows Version
-#include <windows_version.hpp>
-

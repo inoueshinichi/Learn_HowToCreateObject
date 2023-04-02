@@ -10,6 +10,13 @@
  */
 #pragma once
 
+#define NOMAXMIN // Workaround for windows max, min macro
+#include <windows.h>
+#include <tlhelp32.h>
+
+#include <atlstr.h> // CString (ATL)
+#include <tchar.h>  // _TCHAR
+
 #include <defs.hpp>
 
 #include <plugin_host.hpp>
@@ -17,8 +24,8 @@
 
 #include <memory>
 #include <iostream>
-#include <sstream>
 #include <string>
+
 
 class WinApiPlugin final : public Plugin
 {
@@ -37,3 +44,5 @@ public:
 protected:
     PluginManager<WinApiPlugin>& mManager;
 };
+
+void ShowWindowsOSVersion();
