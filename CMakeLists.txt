@@ -138,7 +138,7 @@ message(STATUS "Target System Processor: ${CMAKE_SYSTEM_PROCESSOR}")
 ###############################################################################
 # Top-level Project Name
 ###############################################################################
-project(HowToCreateObject LANGUAGES CXX VERSION 0.1.0)
+project(HowToCreateObject LANGUAGES C CXX VERSION 0.1.0)
 
 
 ###############################################################################

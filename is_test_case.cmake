@@ -74,8 +74,9 @@ function(make_is_test_case BUILD_HEADERS BUILD_SOURCES BUILD_EXE_SOURCE)
 
     # Options for Suppression of Warning
     target_compile_options(${BUILD_TARGET} PRIVATE
-        # MSVC
         $<$<CXX_COMPILER_ID:MSVC>: /wd"4100" /wd"5054" /wd"4819" /wd"4099">
+        $<$<CXX_COMPILER_ID:GNU>: >
+        $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>: >
     )
 
     # Output Preprocessor(*.ii) & Assembler(*.s)

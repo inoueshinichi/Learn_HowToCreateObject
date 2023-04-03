@@ -14,14 +14,14 @@
 
 // Host
 #include <plugin_host.hpp>
-#include <plugin_manager_host.hpp>
 
 #include <memory>
 
-class WinApiPlugin;
-template class PluginManager<WinApiPlugin>;
+class WinApiPluginManager;
+class WinMfcPluginManager;
 
 extern "C"
 {
-    PLUGIN_API std::shared_ptr<Plugin> CreateWinApiPlugin(PluginManager<WinApiPlugin> &manager);
+    PLUGIN_API std::shared_ptr<Plugin> CreateWinApiPlugin(WinApiPluginManager &manager);
+    PLUGIN_API std::shared_ptr<Plugin> CreateWinMfcPlugin(WinMfcPluginManager &manager);
 }

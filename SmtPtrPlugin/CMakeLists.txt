@@ -36,16 +36,5 @@ file(GLOB BUILD_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} /Host/*.cpp)
 # Include Dir
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Host)
 
-# if(MSVC)
-#     # Headers
-#     file(GLOB MSVC_HEADERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} /Host/Win32/*.hpp)
-#     list(APPEND BUILD_HEADERS ${MSVC_HEADERS})
-#     # Sources
-#     file(GLOB MSVC_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} /Host/Win32/*.cpp)
-#     list(APPEND BUILD_SOURCES ${MSVC_SOURCES})
-
-#     # Include Dir
-#     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Host/Win32)
-# endif()
-
+# Exe
 make_is_test_case("${BUILD_HEADERS}" "${BUILD_SOURCES}" main_plugin_host.cpp)

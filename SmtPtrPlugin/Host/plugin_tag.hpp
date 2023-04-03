@@ -18,11 +18,32 @@ struct PluginTag;
 class BasicPlugin;
 template <> struct PluginTag<BasicPlugin>
 {
-    constexpr static char* str = STRMACRO(BasicPlugin);
+    constexpr static const char* str = STRMACRO(BasicPlugin);
+};
+
+class MacPlugin;
+template <> struct PluginTag<MacPlugin>
+{
+    constexpr static const char *str = STRMACRO(MacPlugin);
+};
+
+class LinuxPlugin;
+template <>
+struct PluginTag<LinuxPlugin>
+{
+    constexpr static const char *str = STRMACRO(LinuxPlugin);
 };
 
 class WinApiPlugin;
-template <> struct PluginTag<WinApiPlugin>
+template <>
+struct PluginTag<WinApiPlugin>
 {
-    constexpr static char* str = STRMACRO(WinApiPlugin);
+    constexpr static const char *str = STRMACRO(WinApiPlugin);
+};
+
+class WinMfcPlugin;
+template <>
+struct PluginTag<WinMfcPlugin>
+{
+    constexpr static const char *str = STRMACRO(WinMfcPlugin);
 };

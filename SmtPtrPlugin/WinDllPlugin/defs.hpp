@@ -10,6 +10,17 @@
  */
 #pragma once
 
+///////////////////////
+/* Windows Framework */
+///////////////////////
+#define NOMAXMIN // Workaround for windows max, min macro
+#include <windows.h>
+#include <tlhelp32.h>
+
+#include <atlstr.h> // CString (ATL)
+#include <tchar.h>  // _TCHAR
+
+
 #if defined(PLUGIN_EXPORTS) || defined(PLUGIN_dbg_EXPORTS)
 #   define PLUGIN_API __declspec(dllexport)
 #else
@@ -24,3 +35,5 @@
 // Dll Plugin Version
 #include <version.hpp>
 
+// Windows Version
+#include <windows_version.hpp>

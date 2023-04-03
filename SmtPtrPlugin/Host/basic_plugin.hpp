@@ -21,7 +21,7 @@
 class BasicPlugin final : public Plugin
 {
 public:
-    BasicPlugin(PluginManager<BasicPlugin>& manager) : Plugin(manager), mManager(manager) {}
+    BasicPlugin(BasicPluginManager& manager) : Plugin(manager), mManager(manager) {}
     ~BasicPlugin() {}
 
     const char *PluginName() const override final { return "BasicPlugin"; }

@@ -1,9 +1,9 @@
 /**
- * @file winapi_plugin.hpp
+ * @file winmfc_plugin.hpp
  * @author Shinichi Inoue (inoue.shinichi.1800@gmail.com)
  * @brief 
  * @version 0.1
- * @date 2023-03-24
+ * @date 2023-04-03
  * 
  * @copyright Copyright (c) 2023
  * 
@@ -21,14 +21,13 @@
 #include <iostream>
 #include <string>
 
-
-class WinApiPlugin final : public Plugin
+class WinMfcPlugin final : public Plugin
 {
 public:
-    WinApiPlugin(WinApiPluginManager& manager) : Plugin(manager), mManager(manager) {}
-    ~WinApiPlugin() {}
+    WinMfcPlugin(WinMfcPluginManager &manager) : Plugin(manager), mManager(manager) {}
+    ~WinMfcPlugin() {}
 
-    const char *PluginName() const override final { return PluginTag<WinApiPlugin>::str; }
+    const char *PluginName() const override final { return PluginTag<WinMfcPlugin>::str; }
     int MajorVersion() const override final { return std::stoi(PLUGIN_VERSION_MAJOR); }
     int MinorVersion() const override final { return std::stoi(PLUGIN_VERSION_MINOR); }
     int PatchVersion() const override final { return std::stoi(PLUGIN_VERSION_PATCH); }
@@ -39,4 +38,3 @@ public:
 protected:
     WinApiPluginManager &mManager;
 };
-

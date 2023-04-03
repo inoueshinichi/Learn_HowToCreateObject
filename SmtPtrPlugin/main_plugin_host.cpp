@@ -12,16 +12,16 @@
 #include <exception>
 #include <memory>
 
-#include <plugin_manager_host.hpp>
-
-#include <basic_plugin.hpp>
+#include <derived_plugin_manager_host.hpp>
 
 int main(int, char**)
 {
     try
     {
-        PluginManager<BasicPlugin> basicPluginManager;
-        // std::shared_ptr<BasicPlugin> basicPluginPtr = basicPluginManager.GetPlugin();
+        MacPluginManager macPluginManager;
+        auto macPlugin = macPluginManager.GetPlugin("path/to", "CreateMacPlugin");
+        // std::intptr_t id;
+        // auto macPlugin = macPluginManager.AddPlugin(id, "path/to", "CreateMacPlugin", macPluginManager);
     }
     catch(const std::exception& e)
     {

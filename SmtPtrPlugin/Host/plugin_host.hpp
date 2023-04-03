@@ -10,12 +10,12 @@
  */
 #pragma once
 
-class PluginManagerBase;
+class PluginManager;
 
 class Plugin
 {
 public:
-    Plugin(PluginManagerBase& manager) : mManager(manager) {}
+    Plugin(PluginManager& manager) : mManager(manager) {}
     virtual ~Plugin() {};
 
     virtual const char *PluginName() const = 0;
@@ -29,5 +29,5 @@ public:
 protected:
 
 private:
-    PluginManagerBase &mManager;
+    PluginManager &mManager;
 };
