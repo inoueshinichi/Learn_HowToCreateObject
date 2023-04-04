@@ -23,29 +23,42 @@ public:
     TestClass& operator=(TestClass&&) = default;
 
     // テンプレートメンバ関数からstaticな関数を呼ぶ際に, inline化してないとリンクエラーになる...
-    // static int& GetStaticInt();
-    // static std::mutex& GetStaticMutex();
+    static int& GetStaticInt();
+    static std::mutex& GetStaticMutex();
 
-    static int &GetStaticInt()
-    {
-        std::mutex &sMtx = TestClass::GetStaticMutex();
-        std::lock_guard<std::mutex> locker(sMtx);
+    // static int &GetStaticInt()
+    // {
+    //     std::mutex &sMtx = TestClass::GetStaticMutex();
+    //     std::lock_guard<std::mutex> locker(sMtx);
 
-        static int sIntVal = 0;
-        return sIntVal;
-    }
+    //     static int sIntVal = 0;
+    //     return sIntVal;
+    // }
 
-    static std::mutex &GetStaticMutex()
-    {
-        static std::mutex sMtx;
-        return sMtx;
-    }
+    // static std::mutex &GetStaticMutex()
+    // {
+    //     static std::mutex sMtx;
+    //     return sMtx;
+    // }
 
-    template <typename T>
-    T GetVariable()
+    // template <typename T>
+    // T GetVariable()
+    // {
+    //     int& sVal = GetStaticInt();
+    //     T retVal = static_cast<T>(sVal);
+    //     return retVal;
+    // }
+
+    double GetDoubleVariableInline()
     {
         int& sVal = GetStaticInt();
-        T retVal = static_cast<T>(sVal);
-        return retVal;
+        return (double)sVal;
     }
+
+    double GetDoubleVariable(); 
+
+    float GetFloatVariable();   
 };
+
+// int& TestClass::GetStaticInt();
+// std::mutex& TestClass::GetStaticMutex();
