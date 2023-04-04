@@ -19,6 +19,10 @@
 #include <dlfcn.h>
 #endif
 
+#if defined(_MSC_VER)
+#include <Windows/transform_char.hpp>
+#endif
+
 #include <memory>
 #include <string>
 #include <map>
@@ -56,10 +60,10 @@ struct DllInfo
 };
 
 // Operator == for Hash (std::unordered_map)
-bool operator==(const DllInfo &lhs, const DllInfo &rhs)
-{
-    return (lhs.mHandle == rhs.mHandle) && (lhs.mPluginInfos == rhs.mPluginInfos);
-}
+// bool operator==(const DllInfo &lhs, const DllInfo &rhs)
+// {
+//     return (lhs.mHandle == rhs.mHandle) && (lhs.mPluginInfos == rhs.mPluginInfos);
+// }
 
 // // Hash func for Hash (std::unordered_map)
 // struct DllInfoHash
@@ -72,14 +76,14 @@ bool operator==(const DllInfo &lhs, const DllInfo &rhs)
 //     }
 // };
 
-struct PluginMapHash
-{
-    std::size_t operator()(std::intptr_t key) const
-    {
-        std::size_t hs = std::hash<std::intptr_t>()(key);
-        return hs;
-    }
-};
+// struct PluginMapHash
+// {
+//     std::size_t operator()(std::intptr_t key) const
+//     {
+//         std::size_t hs = std::hash<std::intptr_t>()(key);
+//         return hs;
+//     }
+// };
 
 /**
  * @brief PluginManager
@@ -96,7 +100,7 @@ public:
     PluginManager() { std::cout << "Constructor PluginManager" << std::endl; }
     virtual ~PluginManager() { std::cout << "Destructor ~PluginManager" << std::endl; }
 
-    static bool LoadDll(const std::string &path);   
+    static std::intptr_t LoadDll(const std::string &path);   
     static void UnloadDll(const std::string &path); 
     static void UnloadDllAll();                     
 
@@ -104,7 +108,7 @@ public:
 
     void ErasePlugin(std::shared_ptr<Plugin> &pluginPtr);
     void ClearPlugins();
-    std::intptr_t GetHandleFromPlugin(std::shared_ptr<Plugin> plugin);
+    std::intptr_t GetPluginId(std::shared_ptr<Plugin> plugin);
 
 protected:
     friend class Plugin;
@@ -122,9 +126,9 @@ protected:
                   const std::string &path, 
                   const std::string &exportFactoryName) = 0;
 
-    void RemovePlugin(std::intptr_t handle);
+    void RemovePlugin(std::intptr_t id);
 
-    static DllMap*& GetDllMap(); // inline
+    static DllMap& GetDllMap(); // inline
     static std::mutex &GetMutex(); // inline
 
 private:
@@ -144,7 +148,7 @@ PluginManager::AddPlugin(std::intptr_t handle,
 
     // プラグインオブジェクトのファクトリ関数のポインタを取得
 #if defined(_MSC_VER)
-    creator = (CreatorPtr)::GetProcAddress((HMODULE)handle, exportFactoryName.c_str());
+    creator = (CreatorPtr)::GetProcAddressA((HMODULE)handle, exportFactoryName.c_str());
 #else // Unix // #elif defined(__APPLE__) && defined(__MACH__)
     creator = (CreatorPtr)dlsym((void *)handle, exportFactoryName.c_str());
 #endif
@@ -152,24 +156,27 @@ PluginManager::AddPlugin(std::intptr_t handle,
     if (!creator)
     {
         std::ostringstream oss;
-        oss << "No plugin creator func: " << exportFactoryName;
-        oss << " in " << path << std::endl;
+        oss << "No plugin creator func: `" << exportFactoryName;
+        oss << "` in " << path << std::endl;
         oss << "OS error message: ";
 
 #if defined (_MSC_VER)
         LPVOID lpMsgBuf;
-        ::FormatMessage(
+        ::FormatMessageA(
             FORMAT_MESSAGE_ALLOCATE_BUFFER |
                 FORMAT_MESSAGE_FROM_SYSTEM |
                 FORMAT_MESSAGE_IGNORE_INSERTS,
             NULL,
             GetLastError(),
             MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-            (LPTSTR)&lpMsgBuf,
+            (LPASTR)&lpMsgBuf,
             0,
             NULL);
 
-        oss << (char *)lpMsgBuf;
+        if (lpMsgBuf)
+        {
+            oss << (char *)lpMsgBuf;
+        }
 
         LocalFree(lpMsgBuf);
 #else
@@ -179,9 +186,13 @@ PluginManager::AddPlugin(std::intptr_t handle,
             oss << errorMsg;
         }
 #endif
-        oss << std::endl;
-        
+
+// #if defined(_MSC_VER) && (defined(_UNICODE) || defined(UNICODE))
+//         auto utf16Str = is::CvtShiftJisToUtf16(oss.str());
+//         throw std::runtime_error(utf16Str);
+// #else
         throw std::runtime_error(oss.str());
+// #endif
     }
     
     return creator(manager); // New Plugin Instance

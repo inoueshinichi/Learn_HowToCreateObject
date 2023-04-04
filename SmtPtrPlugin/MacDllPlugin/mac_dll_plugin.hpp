@@ -19,7 +19,12 @@
 
 class MacPluginManager;
 
+#if defined(__cplusplus)
 extern "C"
 {
+#endif
     PLUGIN_API std::shared_ptr<Plugin> CreateMacPlugin(MacPluginManager &manager);
+
+#if defined(__cplusplus)
 }
+#endif

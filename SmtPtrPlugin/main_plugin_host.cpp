@@ -14,14 +14,16 @@
 
 #include <derived_plugin_manager_host.hpp>
 
-int main(int, char**)
+auto main(int, char**) -> int
 {
     try
     {
         MacPluginManager macPluginManager;
-        auto macPlugin = macPluginManager.GetPlugin("path/to", "CreateMacPlugin");
-        // std::intptr_t id;
-        // auto macPlugin = macPluginManager.AddPlugin(id, "path/to", "CreateMacPlugin", macPluginManager);
+        auto macPlugin = macPluginManager.GetPlugin("./MacDllPlugin/libmac_plugind.so", "CreateMacPlugin");
+        if (macPlugin)
+        {
+            macPlugin->About();
+        }
     }
     catch(const std::exception& e)
     {

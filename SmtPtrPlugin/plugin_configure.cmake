@@ -202,6 +202,16 @@ macro(is_macro_plugin_configure PLUGIN_IMPL_DIR VER_MAJOR VER_MINOR VER_PATCH)
         endif()
     endif()
 
+    # # macOS CFBundle, Framework, App
+    # if(APPLE)
+    #     set_target_properties(${DLL_PLUGIN_TARGET} PROPERTIES
+    #         # $<$<STREQUAL:$<TARGET_PROPERTY:${DLL_PLUGIN_TARGET}, TYPE>, STATIC_LIBRARY>:~>
+    #         # $<$<STREQUAL:$<TARGET_PROPERTY:${DLL_PLUGIN_TARGET}, TYPE>, SHARED_LIBRARY>:~>
+    #         # $<$<STREQUAL:$<TARGET_PROPERTY:${DLL_PLUGIN_TARGET}, TYPE>, MODULE_LIBRARY>:~>
+    #         BUNDLE TRUE
+    #     )
+    # endif()
+
     #################
     # Debug utility #
     #################

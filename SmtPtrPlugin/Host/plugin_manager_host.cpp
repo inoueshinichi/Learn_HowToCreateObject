@@ -1,11 +1,15 @@
 #include <plugin_manager_host.hpp>
 
+
+
 #include <algorithm>
+#include <sstream>
+#include <iostream>
 
 // static public
-PluginManager::DllMap *&PluginManager::GetDllMap()
+PluginManager::DllMap &PluginManager::GetDllMap()
 {
-    static PluginManager::DllMap *sDllMap = new PluginManager::DllMap();
+    static PluginManager::DllMap sDllMap;
     return sDllMap;
 }
 
@@ -17,77 +21,95 @@ std::mutex &PluginManager::GetMutex()
 }
 
 // static public
-bool PluginManager::LoadDll(const std::string &path)
+std::intptr_t PluginManager::LoadDll(const std::string &path)
 {
     auto &sMtx = GetMutex();
     std::lock_guard<std::mutex> locker(sMtx);
 
     auto &dllMap = GetDllMap();
-    auto iter = std::find(dllMap->begin(), dllMap->end(), path);
-    if (iter != dllMap->end())
+    auto iter = dllMap.find(path);
+    if (iter != dllMap.end())
     {
-        return true;
+        return dllMap[path].mHandle;
     }
 
     std::intptr_t handle;
+    std::ostringstream oss;
 
 #if defined(_MSC_VER)
 
-    handle = (std::intptr_t)::LoadLibrary(path.c_str());
+    handle = (std::intptr_t)::LoadLibraryA(path.c_str());
 
-    if (handle == (std::intptr_t)NULL)
+    if (!handle)
     {
+        oss << "Failed to load plugin(*.dll) on Windows: " << path << std::endl;
+        oss << "OS error message: ";
+
         LPVOID lpMsgBuf;
-        ::FormatMessage(
+        ::FormatMessageA(
             FORMAT_MESSAGE_ALLOCATE_BUFFER |
                 FORMAT_MESSAGE_FROM_SYSTEM |
                 FORMAT_MESSAGE_IGNORE_INSERTS,
             NULL,
             GetLastError(),
             MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-            (LPTSTR)&lpMsgBuf,
+            (LPASTR)&lpMsgBuf,
             0,
             NULL);
 
         if (lpMsgBuf)
         {
-            // ::OutputDebugString((char *)lpMsgBuf);
-            std::cerr << (char *)lpMsgBuf << std::endl;
+            oss <<  << (char *)lpMsgBuf;
         }
+        
+#if defined(_UNICODE) || defined(UNICODE)
+        auto utf16Str = is::CvtShiftJisToUtf16(oss.str());
+        std::wcerr << utf16Str << std::wendl;
+#else
+        std::cerr << oss.str() << std::endl;
+#endif
 
         LocalFree(lpMsgBuf);
 
-        return false;
+        return (std::intptr_t)NULL;
     }
 
 // #elif defined(__APPLE__) && defined(__MACH__)
 #else // Unix
 
-    handle = (std::intptr_t)dlopen(path.c_str(), RTLD_LAZY | RTLD_LOCAL);
-
-    if (handle == (std::intptr_t)NULL)
+    handle = (std::intptr_t)dlopen(path.c_str(), RTLD_LAZY /*| RTLD_LOCAL*/);
+    if (!handle)
     {
+        oss << "Failed to load plugin(*.so) on macOS: " << path << std::endl;
+        oss << "OS error message: ";
         char *errorMsg = dlerror();
+        
         if (errorMsg)
         {
-            std::ostringstream oss;
             oss << errorMsg;
-            std::cerr << oss.str() << std::endl;
         }
+
+        std::cerr << oss.str() << std::endl;
 
         dlclose((void *)handle);
 
-        return false;
+        return (std::intptr_t)NULL;
     }
 
+#endif
+
+#if defined(_MSC_VER) && (defined(_UNICODE) || defined(UNICODE))
+    auto pathL = is::CvtShiftJisToUtf16(path);
+    std::wcout << L"Load plugin file: " << pathL << std::wendl;
+#else
+    std::cout << "Load plugin file: " << path << std::endl;
 #endif
 
     // Register
     DllInfo info;
     info.mHandle = handle;
-    // dllMap->insert({path, info});
-    (*dllMap)[path] = info;
-    return true;
+    dllMap.insert({path, info});
+    return handle;
 }
 
 // static public
@@ -97,9 +119,9 @@ void PluginManager::UnloadDll(const std::string &path)
     std::lock_guard<std::mutex> locker(sMtx);
 
     auto &dllMap = GetDllMap();
-    auto iter = std::find(dllMap->begin(), dllMap->end(), path);
+    auto iter = dllMap.find(path);
 
-    if (iter != dllMap->end())
+    if (iter != dllMap.end())
     {
         for (size_t i = 0; i < (*iter).second.mPluginInfos.size(); ++i)
         {
@@ -116,7 +138,7 @@ void PluginManager::UnloadDll(const std::string &path)
         dlclose((void *)handle);
 #endif
         (*iter).second.mHandle = NULL;
-        dllMap->erase(iter);
+        dllMap.erase(iter);
     }
 }
 
@@ -125,7 +147,7 @@ void PluginManager::UnloadDllAll()
 {
     auto &dllMap = GetDllMap();
     std::unordered_set<std::string> dllFilePaths;
-    for (auto &pair : *dllMap)
+    for (auto &pair : dllMap)
     {
         dllFilePaths.insert(pair.first);
     }
@@ -145,10 +167,9 @@ PluginManager::GetPlugin(const std::string &path, const std::string &exportFacto
     handle = PluginManager::LoadDll(path); // Dllファイルは, 新規or再利用.
     if (handle == (std::intptr_t)NULL)
     {
-        std::ostringstream oss;
-        oss << "Failed to load plugin(*.so,*.dylib,*.dll): " << path;
-        throw std::runtime_error(oss.str());
+        return std::shared_ptr<Plugin>(nullptr);
     }
+    std::printf("Valid handle: %p\n", (void*)handle);
 
     // プラグインの生成は派生クラスにおまかせ.
     std::shared_ptr<Plugin> pluginPtr = this->AddPluginImpl(handle, path, exportFactoryName);
@@ -156,8 +177,8 @@ PluginManager::GetPlugin(const std::string &path, const std::string &exportFacto
     // 新規生成したプラグインに関する情報を格納.
     auto &dllMap = PluginManager::GetDllMap();
     PluginInfo info;
-    info.mPluginPtr = pluginPtr;      // Pluginスマートポインタを外部に公開しても生存期間は, このポインタが管理する.
-    info.mDllInfo = &(*dllMap)[path]; // 所属先のDllInfoへのポインタ
+    info.mPluginPtr = pluginPtr;   // Pluginスマートポインタを外部に公開しても生存期間は, このポインタが管理する.
+    info.mDllInfo = &dllMap[path]; // 所属先のDllInfoへのポインタ
     info.mDllFilePath = path;
     info.mPluginName = pluginPtr->PluginName();
     info.mCompiledDatetime = pluginPtr->CompiledDatetime();
@@ -166,10 +187,10 @@ PluginManager::GetPlugin(const std::string &path, const std::string &exportFacto
     info.mMinorVersion = pluginPtr->MinorVersion();
     info.mPatchVersion = pluginPtr->PatchVersion();
 
-    // mPluginMap[handle] = info; // Register
-    mPluginMap.insert({handle, info}); // Register
+    std::intptr_t id = GetPluginId(pluginPtr);
+    mPluginMap.insert({id, info}); // Register
 
-    (*dllMap)[path].mPluginInfos.push_back(&mPluginMap[handle]); // 所属するPluginInfoへのポインタ
+    dllMap[path].mPluginInfos.push_back(&mPluginMap[id]); // 所属するPluginInfoへのポインタ
 
     return pluginPtr;
 }
@@ -189,13 +210,13 @@ void PluginManager::ClearPlugins()
         RemovePlugin(handle);
     }
 
-    mPluginMap.clear();
+    mPluginMap.clear(); // 保険
 }
 
 // public
-void PluginManager::ErasePlugin(std::shared_ptr<Plugin> &pluginPtr)
+void PluginManager::ErasePlugin(std::shared_ptr<Plugin> &plugin)
 {
-    std::intptr_t handle = GetHandleFromPlugin(pluginPtr);
+    std::intptr_t handle = GetPluginId(plugin);
     if (!handle)
     {
         return;
@@ -204,7 +225,7 @@ void PluginManager::ErasePlugin(std::shared_ptr<Plugin> &pluginPtr)
 }
 
 // public
-std::intptr_t PluginManager::GetHandleFromPlugin(std::shared_ptr<Plugin> plugin)
+std::intptr_t PluginManager::GetPluginId(std::shared_ptr<Plugin> plugin)
 {
     if (plugin)
     {
@@ -214,9 +235,9 @@ std::intptr_t PluginManager::GetHandleFromPlugin(std::shared_ptr<Plugin> plugin)
 }
 
 // protected
-void PluginManager::RemovePlugin(std::intptr_t handle)
+void PluginManager::RemovePlugin(std::intptr_t id)
 {
-    auto iter = std::find(mPluginMap.begin(), mPluginMap.end(), handle);
+    auto iter = mPluginMap.find(id);
     if (iter != mPluginMap.end())
     {
         PluginInfo &info = (*iter).second;
