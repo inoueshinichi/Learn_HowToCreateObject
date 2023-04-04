@@ -28,20 +28,12 @@ public:
     ~BasicPluginManager() { std::cout << "Destructor ~" << STRMACRO(BasicPluginManager) << std::endl; }
 
 protected:
-    std::shared_ptr<Plugin> GetPluginImpl(const std::string &path, const std::string &exportFactoryName) override final
+    std::shared_ptr<Plugin> 
+    AddPluginImpl(std::intptr_t handle, 
+                  const std::string &path, 
+                  const std::string &exportFactoryName) override final
     {
-        std::intptr_t id;
-        std::shared_ptr<Plugin> pluginPtr = AddPlugin(id, path, exportFactoryName, *this);
-        if (id == std::intptr_t(NULL))
-        {
-            std::ostringstream oss;
-            oss << "No plugin creator: "
-                << "std::shared_ptr<MacPlugin> "
-                << exportFactoryName << "(" << STRMACRO(BasicPluginManager) << "&) in " << path;
-            throw std::runtime_error(oss.str());
-        }
-
-        return pluginPtr;
+        return PluginManager::AddPlugin(handle, path, exportFactoryName, *this);
     }
 };
 
@@ -54,20 +46,12 @@ public:
     ~MacPluginManager() { std::cout << "Destructor ~" << STRMACRO(MacPluginManager) << std::endl; }
 
 protected:
-    std::shared_ptr<Plugin> GetPluginImpl(const std::string &path, const std::string &exportFactoryName) override final
+    std::shared_ptr<Plugin> 
+    AddPluginImpl(std::intptr_t handle,
+                  const std::string &path,
+                  const std::string &exportFactoryName) override final
     {
-        std::intptr_t id;
-        std::shared_ptr<Plugin> pluginPtr = AddPlugin(id, path, exportFactoryName, *this);
-        if (id == std::intptr_t(NULL))
-        {
-            std::ostringstream oss;
-            oss << "No plugin creator: "
-                << "std::shared_ptr<MacPlugin> "
-                << exportFactoryName << "(" << STRMACRO(MacPluginManager) << "&) in " << path;
-            throw std::runtime_error(oss.str());
-        }
-
-        return pluginPtr;
+        return PluginManager::AddPlugin(handle, path, exportFactoryName, *this);
     }
 };
 
@@ -79,23 +63,14 @@ public:
     ~LinuxPluginManager() { std::cout << "Destructor ~" << STRMACRO(LinuxPluginManager) << std::endl; }
 
 protected:
-    std::shared_ptr<Plugin> GetPluginImpl(const std::string &path, const std::string &exportFactoryName) override final
+    std::shared_ptr<Plugin> 
+    AddPluginImpl(std::intptr_t handle,
+                  const std::string &path,
+                  const std::string &exportFactoryName) override final
     {
-        std::intptr_t id;
-        std::shared_ptr<Plugin> pluginPtr = AddPlugin(id, path, exportFactoryName, *this);
-        if (id == std::intptr_t(NULL))
-        {
-            std::ostringstream oss;
-            oss << "No plugin creator: "
-                << "std::shared_ptr<MacPlugin> "
-                << exportFactoryName << "(" << STRMACRO(LinuxPluginManager) << "&) in " << path;
-            throw std::runtime_error(oss.str());
-        }
-
-        return pluginPtr;
+        return PluginManager::AddPlugin(handle, path, exportFactoryName, *this);
     }
 };
-
 
 class WinPluginManager final : public PluginManager
 {
@@ -105,20 +80,12 @@ public:
     ~WinPluginManager() { std::cout << "Destructor ~" << STRMACRO(WinPluginManager) << std::endl; }
 
 protected:
-    std::shared_ptr<Plugin> GetPluginImpl(const std::string &path, const std::string &exportFactoryName) override final
+    std::shared_ptr<Plugin> 
+    AddPluginImpl(std::intptr_t handle,
+                  const std::string &path,
+                  const std::string &exportFactoryName) override final
     {
-        std::intptr_t id;
-        std::shared_ptr<Plugin> pluginPtr = AddPlugin(id, path, exportFactoryName, *this);
-        if (id == std::intptr_t(NULL))
-        {
-            std::ostringstream oss;
-            oss << "No plugin creator: "
-                << "std::shared_ptr<MacPlugin> "
-                << exportFactoryName << "(" << STRMACRO(WinPluginManager) << "&) in " << path;
-            throw std::runtime_error(oss.str());
-        }
-
-        return pluginPtr;
+        return PluginManager::AddPlugin(handle, path, exportFactoryName, *this);
     }
 };
 
@@ -130,20 +97,12 @@ public:
     ~WinApiPluginManager() { std::cout << "Destructor ~" << STRMACRO(WinApiPluginManager) << std::endl; }
 
 protected:
-    std::shared_ptr<Plugin> GetPluginImpl(const std::string &path, const std::string &exportFactoryName) override final
+    std::shared_ptr<Plugin> 
+    AddPluginImpl(std::intptr_t handle,
+                  const std::string &path,
+                  const std::string &exportFactoryName) override final
     {
-        std::intptr_t id;
-        std::shared_ptr<Plugin> pluginPtr = AddPlugin(id, path, exportFactoryName, *this);
-        if (id == std::intptr_t(NULL))
-        {
-            std::ostringstream oss;
-            oss << "No plugin creator: "
-                << "std::shared_ptr<MacPlugin> "
-                << exportFactoryName << "(" << STRMACRO(WinApiPluginManager) << "&) in " << path;
-            throw std::runtime_error(oss.str());
-        }
-
-        return pluginPtr;
+        return PluginManager::AddPlugin(handle, path, exportFactoryName, *this);
     }
 };
 
@@ -155,19 +114,11 @@ public:
     ~WinMfcPluginManager() { std::cout << "Destructor ~" << STRMACRO(WinMfcPluginManager) << std::endl; }
 
 protected:
-    std::shared_ptr<Plugin> GetPluginImpl(const std::string &path, const std::string &exportFactoryName) override final
+    std::shared_ptr<Plugin> 
+    AddPluginImpl(std::intptr_t handle,
+                  const std::string &path,
+                  const std::string &exportFactoryName) override final
     {
-        std::intptr_t id;
-        std::shared_ptr<Plugin> pluginPtr = AddPlugin(id, path, exportFactoryName, *this);
-        if (id == std::intptr_t(NULL))
-        {
-            std::ostringstream oss;
-            oss << "No plugin creator: "
-                << "std::shared_ptr<MacPlugin> "
-                << exportFactoryName << "(" << STRMACRO(WinMfcPluginManager) << "&) in " << path;
-            throw std::runtime_error(oss.str());
-        }
-
-        return pluginPtr;
+        return PluginManager::AddPlugin(handle, path, exportFactoryName, *this);
     }
 };

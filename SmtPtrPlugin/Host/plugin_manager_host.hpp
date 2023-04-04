@@ -16,9 +16,10 @@
 #include <atlstr.h> // CString (ATL)
 #include <tchar.h>  // _TCHAR
 
-#elif defined(__APPLE__) && defined(__MACH__)
+// #elif defined(__APPLE__) && defined(__MACH__)
+#else // Unix
 
-#else
+#include <dlfcn.h>
 
 #endif
 
@@ -32,6 +33,7 @@
 #include <mutex>
 #include <vector>
 #include <iostream>
+#include <sstream>
 
 #include <plugin_host.hpp>
 #include <plugin_tag.hpp>
@@ -78,104 +80,128 @@ public:
 
     std::shared_ptr<Plugin> GetPlugin(const std::string &path, const std::string &exportFactoryName)
     {
-        return this->GetPluginImpl(path, exportFactoryName);
+        std::intptr_t handle;
+        handle = PluginManager::LoadDll(path); // Dllファイルは, 確保 or 再利用
+        if (handle == (std::intptr_t)NULL)
+        {
+            std::ostringstream oss;
+            oss << "Failed to load plugin(*.so,*.dylib,*.dll): " << path;
+            throw std::runtime_error(oss.str());
+        }
+
+        // プラグインの生成は派生クラスにおまかせ.
+        std::shared_ptr<Plugin> pluginPtr = this->AddPluginImpl(handle, path, exportFactoryName);
+
+        
+
+        auto &dllMap = PluginManager::GetDllMap();
+
+        PluginInfo info;
+        info.mPluginPtr = pluginPtr;      // Pluginスマートポインタを外部に公開しても生存期間は, このポインタが管理する.
+        info.mDllInfo = &(*dllMap)[path]; // 所属先のDllInfoへのポインタ
+        info.mDllFilePath = path;
+        info.mPluginName = pluginPtr->PluginName();
+        info.mCompiledDatetime = pluginPtr->CompiledDatetime();
+        info.mCompiledTime = pluginPtr->CompiledTime();
+        info.mMajorVersion = pluginPtr->MajorVersion();
+        info.mMinorVersion = pluginPtr->MinorVersion();
+        info.mPatchVersion = pluginPtr->PatchVersion();
+
+        // id = this->GetIdFromPlugin(info.mPluginPtr); // 生ポインタ(アドレス)をIDとする
+        mPluginMap[handle] = info; // Register
+
+        (*dllMap)[path].mPluginInfos.push_back(&mPluginMap[handle]); // 所属するPluginInfoへのポインタ
+
+        return pluginPtr;
     }
 
     void ClearPlugins();
     void ErasePlugin(std::shared_ptr<Plugin> &pluginPtr);
+
+    std::intptr_t GetHandleFromPlugin(std::shared_ptr<Plugin> plugin);
 
 protected:
     friend class Plugin;
     PluginMap mPluginMap;
 
     template <typename PLUGIN_MANAGER>
-    std::shared_ptr<Plugin> AddPlugin(std::intptr_t &id,
-                                      const std::string &path,
-                                      const std::string &exportFactoryName,
-                                      PLUGIN_MANAGER &manager);
+    std::shared_ptr<Plugin> 
+    AddPlugin(std::intptr_t handle,
+              const std::string &path,
+              const std::string &exportFactoryName,
+              PLUGIN_MANAGER &manager);
 
-    virtual std::shared_ptr<Plugin> GetPluginImpl(const std::string &path, 
-                                                  const std::string &exportFactoryName) = 0;
+    virtual std::shared_ptr<Plugin> 
+    AddPluginImpl(std::intptr_t handle,
+                  const std::string &path, 
+                  const std::string &exportFactoryName) = 0;
 
-    void RemovePlugin(std::intptr_t id);
-
-    std::intptr_t GetIdFromPlugin(std::shared_ptr<Plugin> plugin)
-    {
-        if (plugin)
-        {
-            return reinterpret_cast<std::intptr_t>((void *)plugin.get()); // 生ポインタ(アドレス)をIDとする
-        }
-        return (std::intptr_t)NULL;
-    }
+    void RemovePlugin(std::intptr_t handle);
 
     static DllMap*& GetDllMap();
     static std::mutex &GetMutex();
 
 private:
-    
-
     // static std::recursive_mutex &GetRecMutex();
     // static void AddRef(const std::string &keyPath, DllMap &dllMap);
     // static bool Release(const std::string &keyPath, DllMap &dllMap);
 };
 
 template <typename PLUGIN_MANAGER>
-std::shared_ptr<Plugin> PluginManager::AddPlugin(std::intptr_t &id,
-                                                 const std::string &path,
-                                                 const std::string &exportFactoryName,
-                                                 PLUGIN_MANAGER &manager)
+std::shared_ptr<Plugin> 
+PluginManager::AddPlugin(std::intptr_t handle,
+                         const std::string &path,
+                         const std::string &exportFactoryName,
+                         PLUGIN_MANAGER &manager)
 {
-    std::intptr_t handle;
-    handle = this->LoadDll(path); // Dllファイルは, 確保 or 再利用
-    if (handle == (std::intptr_t)NULL)
-    {
-        return std::shared_ptr<Plugin>(); // nullptr
-    }
-
     // ファクトリ関数
     using CreatorPtr = std::shared_ptr<Plugin> (*)(PLUGIN_MANAGER &);
     CreatorPtr creator = nullptr;
 
-#if defined(_MSC_VER)
-
     // プラグインオブジェクトのファクトリ関数のポインタを取得
+#if defined(_MSC_VER)
     creator = (CreatorPtr)::GetProcAddress((HMODULE)handle, exportFactoryName.c_str());
-
-    if (creator == NULL)
-    {
-        id = NULL;
-        return std::shared_ptr<Plugin>(); // nullptr
-    }
-
-#elif defined(__APPLE__) && defined(__MACH__)
-
-#else
-
+#else // Unix // #elif defined(__APPLE__) && defined(__MACH__)
+    creator = (CreatorPtr)dlsym((void *)handle, exportFactoryName.c_str());
 #endif
 
-    std::shared_ptr<Plugin> pluginPtr;
-    pluginPtr = creator(manager); // New Plugin Instance
+    if (!creator)
+    {
+        std::ostringstream oss;
+        oss << "No plugin creator func: " << exportFactoryName;
+        oss << " in " << path << std::endl;
+        oss << "OS error message: ";
+
+#if defined (_MSC_VER)
+        LPVOID lpMsgBuf;
+        ::FormatMessage(
+            FORMAT_MESSAGE_ALLOCATE_BUFFER |
+                FORMAT_MESSAGE_FROM_SYSTEM |
+                FORMAT_MESSAGE_IGNORE_INSERTS,
+            NULL,
+            GetLastError(),
+            MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+            (LPTSTR)&lpMsgBuf,
+            0,
+            NULL);
+
+        oss << (char *)lpMsgBuf;
+
+        LocalFree(lpMsgBuf);
+#else
+        char* errorMsg = dlerror();
+        if (errorMsg)
+        {
+            oss << errorMsg;
+        }
+#endif
+        oss << std::endl;
+        
+        throw std::runtime_error(oss.str());
+    }
+    
+    return creator(manager); // New Plugin Instance
     /**
-     * @note この時点でプラグインインスタンスはDLLファイルから切り離されている
+     * @note この時点でプラグインインスタンスはDLLファイルから切り離される.
      */
-
-    auto &dllMap = this->GetDllMap();
-
-    PluginInfo info;
-    info.mPluginPtr = pluginPtr;   // Pluginスマートポインタを外部に公開しても生存期間は, このポインタが管理する.
-    info.mDllInfo = &(*dllMap)[path]; // 所属先のDllInfoへのポインタ
-    info.mDllFilePath = path;
-    info.mPluginName = pluginPtr->PluginName();
-    info.mCompiledDatetime = pluginPtr->CompiledDatetime();
-    info.mCompiledTime = pluginPtr->CompiledTime();
-    info.mMajorVersion = pluginPtr->MajorVersion();
-    info.mMinorVersion = pluginPtr->MinorVersion();
-    info.mPatchVersion = pluginPtr->PatchVersion();
-
-    id = this->GetIdFromPlugin(info.mPluginPtr); // 生ポインタ(アドレス)をIDとする
-    mPluginMap[id] = info;                                                  // Register
-
-    (*dllMap)[path].mPluginInfos.push_back(&mPluginMap[id]); // 所属するPluginInfoへのポインタ
-
-    return pluginPtr;
 }

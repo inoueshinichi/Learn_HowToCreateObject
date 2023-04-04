@@ -81,7 +81,7 @@ bool PluginManager::LoadDll(const std::string &path)
 
     handle = (std::intptr_t)::LoadLibrary(path.c_str());
 
-    if (handle == NULL)
+    if (handle == (std::intptr_t)NULL)
     {
         LPVOID lpMsgBuf;
         ::FormatMessage(
@@ -95,17 +95,36 @@ bool PluginManager::LoadDll(const std::string &path)
             0,
             NULL);
 
-        ::OutputDebugString((char *)lpMsgBuf);
-
+        if (lpMsgBuf)
+        {
+            // ::OutputDebugString((char *)lpMsgBuf);
+            std::cerr << (char *)lpMsgBuf << std::endl;
+        }
+        
         LocalFree(lpMsgBuf);
 
-        // return NULL;
         return false;
     }
 
-#elif defined(__APPLE__) && defined(__MACH__)
+// #elif defined(__APPLE__) && defined(__MACH__)
+#else // Unix
 
-#else
+    handle = (std::intptr_t)dlopen(path.c_str(), RTLD_LAZY | RTLD_LOCAL);
+
+    if (handle == (std::intptr_t)NULL)
+    {
+        char* errorMsg = dlerror();
+        if (errorMsg)
+        {
+            std::ostringstream oss;
+            oss << errorMsg;
+            std::cerr << oss.str() << std::endl;
+        }
+
+        dlclose((void *)handle);
+        
+        return false;
+    }
 
 #endif
 
@@ -127,6 +146,7 @@ void PluginManager::UnloadDll(const std::string &path)
 
     auto &dllMap = GetDllMap();
     auto iter = std::find(dllMap->begin(), dllMap->end(), path);
+    
     if (iter != dllMap->end())
     {
         // return Release(path, dllMap);
@@ -138,17 +158,12 @@ void PluginManager::UnloadDll(const std::string &path)
 
         std::intptr_t handle = (*iter).second.mHandle;
 
-#if defined(_MSC_VER)
-
         // Plugin(Dll)を解放
+#if defined(_MSC_VER)
         ::FreeLibrary((HMODULE)handle);
-
-#elif defined(__APPLE__) && defined(__MACH__)
-
-#else
-
+#else // Unix // #elif defined(__APPLE__) && defined(__MACH__)
+        dlclose((void *)handle);
 #endif
-
         (*iter).second.mHandle = NULL;
         dllMap->erase(iter);
     }
@@ -170,9 +185,9 @@ void PluginManager::UnloadDllAll()
     }
 }
 
-void PluginManager::RemovePlugin(std::intptr_t id)
+void PluginManager::RemovePlugin(std::intptr_t handle)
 {
-    auto iter = std::find(mPluginMap.begin(), mPluginMap.end(), id);
+    auto iter = std::find(mPluginMap.begin(), mPluginMap.end(), handle);
     if (iter != mPluginMap.end())
     {
         PluginInfo &info = (*iter).second;
@@ -198,16 +213,16 @@ void PluginManager::RemovePlugin(std::intptr_t id)
 
 void PluginManager::ClearPlugins()
 {
-    std::vector<std::intptr_t> ids;
-    ids.reserve(mPluginMap.size());
+    std::vector<std::intptr_t> handles;
+    handles.reserve(mPluginMap.size());
     for (auto &pair : mPluginMap)
     {
-        ids.push_back(pair.first);
+        handles.push_back(pair.first);
     }
 
-    for (auto &id : ids)
+    for (auto &handle : handles)
     {
-        RemovePlugin(id);
+        RemovePlugin(handle);
     }
 
     mPluginMap.clear();
@@ -215,10 +230,19 @@ void PluginManager::ClearPlugins()
 
 void PluginManager::ErasePlugin(std::shared_ptr<Plugin> &pluginPtr)
 {
-    std::intptr_t id = GetIdFromPlugin(pluginPtr);
-    if (!id)
+    std::intptr_t handle = GetHandleFromPlugin(pluginPtr);
+    if (!handle)
     {
         return;
     }
-    RemovePlugin(id);
+    RemovePlugin(handle);
+}
+
+std::intptr_t PluginManager::GetHandleFromPlugin(std::shared_ptr<Plugin> plugin)
+{
+    if (plugin)
+    {
+        return reinterpret_cast<std::intptr_t>((void *)plugin.get()); // 生ポインタ(アドレス)をIDとする
+    }
+    return (std::intptr_t)NULL;
 }
