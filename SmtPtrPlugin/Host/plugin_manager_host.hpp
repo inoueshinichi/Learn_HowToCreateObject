@@ -110,6 +110,17 @@ public:
     void ClearPlugins();
     std::intptr_t GetPluginId(std::shared_ptr<Plugin> plugin);
 
+    std::string GetFilePath(std::intptr_t id)
+    {
+        auto iter = mPluginMap.find(id);
+        if (iter != mPluginMap.end())
+        {
+            PluginInfo &info = (*iter).second;
+            return info.mDllFilePath;
+        }
+        return std::string();
+    }
+
 protected:
     friend class Plugin;
     PluginMap mPluginMap;

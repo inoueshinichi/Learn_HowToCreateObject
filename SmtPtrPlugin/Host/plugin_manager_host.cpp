@@ -260,3 +260,4 @@ void PluginManager::RemovePlugin(std::intptr_t id)
         mPluginMap.erase(iter);
     }
 }
+

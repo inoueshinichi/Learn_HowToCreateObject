@@ -17,7 +17,6 @@
 #include <derived_plugin_manager_host.hpp>
 
 #include <memory>
-#include <iostream>
 #include <string>
 
 class MacPlugin final : public Plugin
@@ -32,7 +31,7 @@ public:
     int PatchVersion() const override final { return std::stoi(PLUGIN_VERSION_PATCH); }
     const char *CompiledDatetime() const override final { return PLUGIN_COMPILED_DATETIME; }
     const char *CompiledTime() const override final { return PLUGIN_COMPILED_TIME; }
-    void About() const override final { std::cout << "About " << PluginName() << std::endl; }
+    void About() const override final;
 
 protected:
     MacPluginManager &mManager;
