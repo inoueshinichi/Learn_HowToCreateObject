@@ -9,8 +9,16 @@
  * 
  */
 #pragma once
-#include <framework.hpp>
-#include <defs.hpp>
+
+///////////////////////
+/* Windows Framework */
+///////////////////////
+#define NOMAXMIN // Workaround for windows max, min macro
+#include <windows.h>
+#include <tlhelp32.h>
+
+#include <atlstr.h> // CString (ATL)
+#include <tchar.h>  // _TCHAR
 
 #include <string>
 

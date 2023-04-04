@@ -28,13 +28,34 @@ endif()
 include(../is_test_case.cmake)
 
 # Headers
-file(GLOB BUILD_HEADERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} /Host/*.hpp)
+file(GLOB BUILD_HEADERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} 
+    ./Host/*.hpp
+)
 
 # Sources
-file(GLOB BUILD_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} /Host/*.cpp)
+file(GLOB BUILD_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} 
+    ./Host/*.cpp
+)
 
 # Include Dir
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Host)
+
+if(MSVC)
+    # Windows Headers
+    file(GLOB BUILD_WIN_HEADERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+        ./Host/Windows/*.hpp
+    )
+
+    # Windows Sources
+    file(GLOB BUILD_WIN_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+        ./Host/Windows/*.cpp
+    )
+
+    # Additional Headers and Sources
+    list(APPEND BUILD_HEADERS ${BUILD_WIN_HEADERS})
+    list(APPEND BUILD_SOURCES ${BUILD_WIN_SOURCES}) 
+    
+endif()
 
 # Exe
 make_is_test_case("${BUILD_HEADERS}" "${BUILD_SOURCES}" main_plugin_host.cpp)
@@ -46,16 +67,19 @@ make_is_test_case("${BUILD_HEADERS}" "${BUILD_SOURCES}" main_plugin_host.cpp)
 ################################ 
 # Headers
 file(GLOB BUILD_TEST_HEADERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} 
-    /TestCheckMovement/*.hpp
+   ./TestCheckMovement/*.hpp
 )
 
 # Sources
 file(GLOB BUILD_TEST_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} 
-    /TestCheckMovement/*.cpp
+    ./TestCheckMovement/*.cpp
 )
 
 # Include Dir
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/TestCheckMovement)
+
+message(STATUS "BUILD_TEST_HEADERS: ${BUILD_TEST_HEADERS}")
+message(STATUS "BUILD_TEST_SOURCES: ${BUILD_TEST_SOURCES}")
 
 
 # Exe

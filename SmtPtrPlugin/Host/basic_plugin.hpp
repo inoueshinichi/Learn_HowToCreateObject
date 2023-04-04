@@ -11,7 +11,7 @@
 #pragma once
 
 #include <plugin_host.hpp>
-#include <plugin_manager_host.hpp>
+#include <derived_plugin_manager_host.hpp>
 
 #include <memory>
 #include <iostream>
@@ -33,5 +33,5 @@ public:
     void About() const override final { std::cout << "About " << PluginName() << std::endl; }
 
 protected:
-    PluginManager<BasicPlugin>& mManager;
+    BasicPluginManager &mManager;
 };

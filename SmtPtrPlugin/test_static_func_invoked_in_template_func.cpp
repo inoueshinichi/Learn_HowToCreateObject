@@ -21,7 +21,10 @@ auto main(int, char**) -> int
         TestClass testClass;
         TestClass::GetStaticInt() = 100;
 
-        std::cout << "Static Variable: " << testClass.GetVariable<double>() << std::endl;
+        // std::cout << "Static Variable: " << testClass.GetVariable<double>() << std::endl;
+        // std::cout << "Static Variable: " << testClass.GetDoubleVariable() << std::endl;
+        // std::cout << "Static Variable (Inline): " << testClass.GetDoubleVariableInline() << std::endl;
+        std::cout << "Instance Variable: " << testClass.GetFloatVariable() << std::endl;
     }
     catch(const std::exception& e)
     {

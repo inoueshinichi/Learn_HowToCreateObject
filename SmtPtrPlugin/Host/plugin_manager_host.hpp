@@ -15,12 +15,8 @@
 #include <windows.h>
 #include <atlstr.h> // CString (ATL)
 #include <tchar.h>  // _TCHAR
-
-// #elif defined(__APPLE__) && defined(__MACH__)
-#else // Unix
-
+#else // Unix // #elif defined(__APPLE__) && defined(__MACH__)
 #include <dlfcn.h>
-
 #endif
 
 #include <memory>
@@ -59,6 +55,32 @@ struct DllInfo
     std::vector<PluginInfo*> mPluginInfos; // Dllを参照しているPluginへのポインタ
 };
 
+// Operator == for Hash (std::unordered_map)
+bool operator==(const DllInfo &lhs, const DllInfo &rhs)
+{
+    return (lhs.mHandle == rhs.mHandle) && (lhs.mPluginInfos == rhs.mPluginInfos);
+}
+
+// // Hash func for Hash (std::unordered_map)
+// struct DllInfoHash
+// {
+//     std::size_t operator()(DllInfo dllInfo) const
+//     {
+//         std::size_t hs1 = std::hash<std::intptr_t>()(dllInfo.mHandle);
+//         std::size_t hs2 = std::hash<std::vector<PluginInfo *>>()(dllInfo.mPluginInfos);
+//         return hs1 ^ hs2;
+//     }
+// };
+
+struct PluginMapHash
+{
+    std::size_t operator()(std::intptr_t key) const
+    {
+        std::size_t hs = std::hash<std::intptr_t>()(key);
+        return hs;
+    }
+};
+
 /**
  * @brief PluginManager
  * @note  シングルトン派生クラスの基底クラス
@@ -67,57 +89,21 @@ struct DllInfo
 class PluginManager
 {
 public:
-    using PluginMap = std::map<std::intptr_t, PluginInfo>;
-    using DllMap = std::unordered_map<std::string, DllInfo>;
+    using DllMap = std::unordered_map<std::string, DllInfo>; // static
+    using PluginMap = std::map<std::intptr_t, PluginInfo>; // un-static(key: plugin-pointer)
 
     // protected:
     PluginManager() { std::cout << "Constructor PluginManager" << std::endl; }
     virtual ~PluginManager() { std::cout << "Destructor ~PluginManager" << std::endl; }
 
-    static bool LoadDll(const std::string &path);   // inline
-    static void UnloadDll(const std::string &path); // inline
-    static void UnloadDllAll();                     // inline
+    static bool LoadDll(const std::string &path);   
+    static void UnloadDll(const std::string &path); 
+    static void UnloadDllAll();                     
 
-    std::shared_ptr<Plugin> GetPlugin(const std::string &path, const std::string &exportFactoryName)
-    {
-        std::intptr_t handle;
-        handle = PluginManager::LoadDll(path); // Dllファイルは, 確保 or 再利用
-        if (handle == (std::intptr_t)NULL)
-        {
-            std::ostringstream oss;
-            oss << "Failed to load plugin(*.so,*.dylib,*.dll): " << path;
-            throw std::runtime_error(oss.str());
-        }
+    std::shared_ptr<Plugin> GetPlugin(const std::string &path, const std::string &exportFactoryName);
 
-        // プラグインの生成は派生クラスにおまかせ.
-        std::shared_ptr<Plugin> pluginPtr = this->AddPluginImpl(handle, path, exportFactoryName);
-
-        
-
-        auto &dllMap = PluginManager::GetDllMap();
-
-        PluginInfo info;
-        info.mPluginPtr = pluginPtr;      // Pluginスマートポインタを外部に公開しても生存期間は, このポインタが管理する.
-        info.mDllInfo = &(*dllMap)[path]; // 所属先のDllInfoへのポインタ
-        info.mDllFilePath = path;
-        info.mPluginName = pluginPtr->PluginName();
-        info.mCompiledDatetime = pluginPtr->CompiledDatetime();
-        info.mCompiledTime = pluginPtr->CompiledTime();
-        info.mMajorVersion = pluginPtr->MajorVersion();
-        info.mMinorVersion = pluginPtr->MinorVersion();
-        info.mPatchVersion = pluginPtr->PatchVersion();
-
-        // id = this->GetIdFromPlugin(info.mPluginPtr); // 生ポインタ(アドレス)をIDとする
-        mPluginMap[handle] = info; // Register
-
-        (*dllMap)[path].mPluginInfos.push_back(&mPluginMap[handle]); // 所属するPluginInfoへのポインタ
-
-        return pluginPtr;
-    }
-
-    void ClearPlugins();
     void ErasePlugin(std::shared_ptr<Plugin> &pluginPtr);
-
+    void ClearPlugins();
     std::intptr_t GetHandleFromPlugin(std::shared_ptr<Plugin> plugin);
 
 protected:
@@ -138,15 +124,13 @@ protected:
 
     void RemovePlugin(std::intptr_t handle);
 
-    static DllMap*& GetDllMap();
-    static std::mutex &GetMutex();
+    static DllMap*& GetDllMap(); // inline
+    static std::mutex &GetMutex(); // inline
 
 private:
-    // static std::recursive_mutex &GetRecMutex();
-    // static void AddRef(const std::string &keyPath, DllMap &dllMap);
-    // static bool Release(const std::string &keyPath, DllMap &dllMap);
 };
 
+// protected
 template <typename PLUGIN_MANAGER>
 std::shared_ptr<Plugin> 
 PluginManager::AddPlugin(std::intptr_t handle,

@@ -2,65 +2,21 @@
 
 #include <algorithm>
 
-// std::recursive_mutex &PluginManager::GetRecMutex()
-// {
-//     static std::recursive_mutex sRMtx;
-//     return sRMtx;
-// }
-
-// void PluginManager::AddRef(const std::string &keyPath, DllMap &dllMap)
-// {
-//     auto &sRMtx = GetRecMutex();
-//     std::lock_guard<std::recursive_mutex> locker(sRMtx);
-//     dllMap[keyPath].mRefCount += 1;
-// }
-
-// bool PluginManager::Release(const std::string &keyPath, DllMap &dllMap)
-// {
-//     auto &sRMtx = GetRecMutex();
-//     std::lock_guard<std::recursive_mutex> locker(sRMtx);
-
-//     auto &dllMap = GetDllMap();
-//     std::intptr_t handle = dllMap[keyPath].mHandle;
-//     dllMap[keyPath].mRefCount -= 1;
-
-//     if (dllMap[keyPath].mRefCount > 0)
-//     {
-//         return false;
-//     }
-
-// #if defined(_MSC_VER)
-
-//         // Plugin(Dll)を解放
-//         ::FreeLibrary(handle);
-
-// #elif defined(__APPLE__) && defined(__MACH__)
-
-// #else
-
-// #endif
-
-//     // Unregister
-//     dllMap.erase(keyPath);
-
-//     return true;
-// }
-
-// static
+// static public
 PluginManager::DllMap *&PluginManager::GetDllMap()
 {
-    static PluginManager::DllMap* sDllMap = new PluginManager::DllMap();
+    static PluginManager::DllMap *sDllMap = new PluginManager::DllMap();
     return sDllMap;
 }
 
-// static
+// static public
 std::mutex &PluginManager::GetMutex()
 {
     static std::mutex sMtx;
     return sMtx;
 }
 
-// static
+// static public
 bool PluginManager::LoadDll(const std::string &path)
 {
     auto &sMtx = GetMutex();
@@ -70,8 +26,6 @@ bool PluginManager::LoadDll(const std::string &path)
     auto iter = std::find(dllMap->begin(), dllMap->end(), path);
     if (iter != dllMap->end())
     {
-        // AddRef(path, dllMap);
-        // return (*iter).second.mHandle;
         return true;
     }
 
@@ -100,7 +54,7 @@ bool PluginManager::LoadDll(const std::string &path)
             // ::OutputDebugString((char *)lpMsgBuf);
             std::cerr << (char *)lpMsgBuf << std::endl;
         }
-        
+
         LocalFree(lpMsgBuf);
 
         return false;
@@ -113,7 +67,7 @@ bool PluginManager::LoadDll(const std::string &path)
 
     if (handle == (std::intptr_t)NULL)
     {
-        char* errorMsg = dlerror();
+        char *errorMsg = dlerror();
         if (errorMsg)
         {
             std::ostringstream oss;
@@ -122,7 +76,7 @@ bool PluginManager::LoadDll(const std::string &path)
         }
 
         dlclose((void *)handle);
-        
+
         return false;
     }
 
@@ -131,14 +85,12 @@ bool PluginManager::LoadDll(const std::string &path)
     // Register
     DllInfo info;
     info.mHandle = handle;
-    // info.RefCount = 0;
+    // dllMap->insert({path, info});
     (*dllMap)[path] = info;
-    // AddRef(path, dllMap);
-    // return handle;
     return true;
 }
 
-// static
+// static public
 void PluginManager::UnloadDll(const std::string &path)
 {
     auto &sMtx = GetMutex();
@@ -146,10 +98,9 @@ void PluginManager::UnloadDll(const std::string &path)
 
     auto &dllMap = GetDllMap();
     auto iter = std::find(dllMap->begin(), dllMap->end(), path);
-    
+
     if (iter != dllMap->end())
     {
-        // return Release(path, dllMap);
         for (size_t i = 0; i < (*iter).second.mPluginInfos.size(); ++i)
         {
             (*iter).second.mPluginInfos[i]->mDllInfo = nullptr; // Plugin(Info)とDllの関連を切る
@@ -169,7 +120,7 @@ void PluginManager::UnloadDll(const std::string &path)
     }
 }
 
-// static
+// static public
 void PluginManager::UnloadDllAll()
 {
     auto &dllMap = GetDllMap();
@@ -185,6 +136,84 @@ void PluginManager::UnloadDllAll()
     }
 }
 
+// public
+std::shared_ptr<Plugin> 
+PluginManager::GetPlugin(const std::string &path, const std::string &exportFactoryName)
+{
+    // Dllハンドルの取得
+    std::intptr_t handle;
+    handle = PluginManager::LoadDll(path); // Dllファイルは, 新規or再利用.
+    if (handle == (std::intptr_t)NULL)
+    {
+        std::ostringstream oss;
+        oss << "Failed to load plugin(*.so,*.dylib,*.dll): " << path;
+        throw std::runtime_error(oss.str());
+    }
+
+    // プラグインの生成は派生クラスにおまかせ.
+    std::shared_ptr<Plugin> pluginPtr = this->AddPluginImpl(handle, path, exportFactoryName);
+
+    // 新規生成したプラグインに関する情報を格納.
+    auto &dllMap = PluginManager::GetDllMap();
+    PluginInfo info;
+    info.mPluginPtr = pluginPtr;      // Pluginスマートポインタを外部に公開しても生存期間は, このポインタが管理する.
+    info.mDllInfo = &(*dllMap)[path]; // 所属先のDllInfoへのポインタ
+    info.mDllFilePath = path;
+    info.mPluginName = pluginPtr->PluginName();
+    info.mCompiledDatetime = pluginPtr->CompiledDatetime();
+    info.mCompiledTime = pluginPtr->CompiledTime();
+    info.mMajorVersion = pluginPtr->MajorVersion();
+    info.mMinorVersion = pluginPtr->MinorVersion();
+    info.mPatchVersion = pluginPtr->PatchVersion();
+
+    // mPluginMap[handle] = info; // Register
+    mPluginMap.insert({handle, info}); // Register
+
+    (*dllMap)[path].mPluginInfos.push_back(&mPluginMap[handle]); // 所属するPluginInfoへのポインタ
+
+    return pluginPtr;
+}
+
+// public
+void PluginManager::ClearPlugins()
+{
+    std::vector<std::intptr_t> handles;
+    handles.reserve(mPluginMap.size());
+    for (auto &pair : mPluginMap)
+    {
+        handles.push_back(pair.first);
+    }
+
+    for (auto &handle : handles)
+    {
+        RemovePlugin(handle);
+    }
+
+    mPluginMap.clear();
+}
+
+// public
+void PluginManager::ErasePlugin(std::shared_ptr<Plugin> &pluginPtr)
+{
+    std::intptr_t handle = GetHandleFromPlugin(pluginPtr);
+    if (!handle)
+    {
+        return;
+    }
+    RemovePlugin(handle);
+}
+
+// public
+std::intptr_t PluginManager::GetHandleFromPlugin(std::shared_ptr<Plugin> plugin)
+{
+    if (plugin)
+    {
+        return reinterpret_cast<std::intptr_t>((void *)plugin.get()); // 生ポインタ(アドレス)をIDとする
+    }
+    return (std::intptr_t)NULL;
+}
+
+// protected
 void PluginManager::RemovePlugin(std::intptr_t handle)
 {
     auto iter = std::find(mPluginMap.begin(), mPluginMap.end(), handle);
@@ -209,40 +238,4 @@ void PluginManager::RemovePlugin(std::intptr_t handle)
 
         mPluginMap.erase(iter);
     }
-}
-
-void PluginManager::ClearPlugins()
-{
-    std::vector<std::intptr_t> handles;
-    handles.reserve(mPluginMap.size());
-    for (auto &pair : mPluginMap)
-    {
-        handles.push_back(pair.first);
-    }
-
-    for (auto &handle : handles)
-    {
-        RemovePlugin(handle);
-    }
-
-    mPluginMap.clear();
-}
-
-void PluginManager::ErasePlugin(std::shared_ptr<Plugin> &pluginPtr)
-{
-    std::intptr_t handle = GetHandleFromPlugin(pluginPtr);
-    if (!handle)
-    {
-        return;
-    }
-    RemovePlugin(handle);
-}
-
-std::intptr_t PluginManager::GetHandleFromPlugin(std::shared_ptr<Plugin> plugin)
-{
-    if (plugin)
-    {
-        return reinterpret_cast<std::intptr_t>((void *)plugin.get()); // 生ポインタ(アドレス)をIDとする
-    }
-    return (std::intptr_t)NULL;
 }
