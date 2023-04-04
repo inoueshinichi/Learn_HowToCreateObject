@@ -38,3 +38,25 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Host)
 
 # Exe
 make_is_test_case("${BUILD_HEADERS}" "${BUILD_SOURCES}" main_plugin_host.cpp)
+
+
+
+################################
+# Test Host Exe
+################################ 
+# Headers
+file(GLOB BUILD_TEST_HEADERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} 
+    /TestCheckMovement/*.hpp
+)
+
+# Sources
+file(GLOB BUILD_TEST_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} 
+    /TestCheckMovement/*.cpp
+)
+
+# Include Dir
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/TestCheckMovement)
+
+
+# Exe
+make_is_test_case("${BUILD_TEST_HEADERS}" "${BUILD_TEST_SOURCES}" test_static_func_invoked_in_template_func.cpp)
