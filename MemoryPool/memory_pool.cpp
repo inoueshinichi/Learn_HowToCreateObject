@@ -54,19 +54,19 @@ int main(int, char**)
                 int mem1_bytes = ROUND_SMALL + 128; // 640B
                 Memory *mem1 = new Memory(mem1_bytes);
                 mem1->alloc();
-                std::printf("mem1 bytes: %d\n", (int)mem1->bytes());
+                std::printf("mem1 bytes: %d (%s)\n", (int)mem1->bytes(), mem1->locked() ? "lock" : "unlock");
 
                 std::cout << "dividing... 256 from mem1" << std::endl;
                 second_start = ROUND_SMALL / 2; // 256B
                 Memory *mem2 = mem1->divide(second_start);
                 mem1->lock(); // mem1はロック
-                std::printf("mem1 bytes: %d\n", (int)mem1->bytes());
-                std::printf("mem2 bytes: %d\n", (int)mem2->bytes());
+                std::printf("mem1 bytes: %d (%s)\n", (int)mem1->bytes(), mem1->locked() ? "lock" : "unlock");
+                std::printf("mem2 bytes: %d (%s)\n", (int)mem2->bytes(), mem2->locked() ? "lock" : "unlock");
 
                 std::cout << "try_merge... " << std::endl;
                 mem1->try_merge(mem2);
-                std::printf("mem1 bytes: %d\n", (int)mem1->bytes());
-                std::printf("mem2 bytes: %d\n", (int)mem2->bytes());
+                std::printf("mem1 bytes: %d (%s)\n", (int)mem1->bytes(), mem1->locked() ? "lock" : "unlock");
+                std::printf("mem2 bytes: %d (%s)\n", (int)mem2->bytes(), mem2->locked() ? "lock" : "unlock");
 
                 delete mem2;
                 delete mem1;
@@ -107,13 +107,14 @@ int main(int, char**)
                 std::printf("mem3 bytes: %d (%s)\n", (int)mem3->bytes(), mem3->locked() ? "lock" : "unlock"); // 128B lock
                 std::printf("mem4 bytes: %d (%s)\n", (int)mem4->bytes(), mem4->locked() ? "lock" : "unlock"); // 128B unlock
 
-
                 /* release mem2 */
                 mem2->release();
-#if (0)
+#if (1)
+                // 合理的なマージ
                 std::cout << "mem1->try_merge(mem2)..." << std::endl;
                 mem1->try_merge(mem2);
 #else
+                // 非合理なマージ -> PoolAllocatorを使用してマージする際は, 実装されない
                 std::cout << "mem3->try_merge(mem2)..." << std::endl;
                 mem3->try_merge(mem2);
 #endif
