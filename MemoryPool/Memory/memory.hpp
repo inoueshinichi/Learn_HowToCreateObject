@@ -88,6 +88,14 @@ public:
         dealloc();
     }
 
+    // disable copy constructor and assignment
+    Memory(const Memory&) = delete;
+    Memory& operator=(const Memory&) = delete;
+
+    // enable move constructor and assignment
+    Memory(Memory&& other) = default;
+    Memory& operator=(Memory&& rhs) = default;;
+
     inline size_t bytes() const { return _bytes; }
     inline void *pointer() { return _ptr; }
     inline const void *const_pointer() const { return _ptr; }
@@ -152,7 +160,7 @@ public:
         }
 
         // 統合したのでメモリ量が増加する
-        _bytes = from->bytes();
+        _bytes += from->bytes();
 
         // fromが指すMemoryインスタンスを無効にする
         from->disable(); 
