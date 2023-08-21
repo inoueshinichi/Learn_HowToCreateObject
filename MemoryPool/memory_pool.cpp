@@ -18,14 +18,6 @@
 #include <unordered_map>
 #include <map>
 
-static constexpr int ROUND_SMALL = 512;       // 512B
-static constexpr int ROUND_LARGE = 128 << 10; // 128KB
-static constexpr int SMALL_ALLOC = 1 << 20;   // 1MB
-
-using Key = int;
-using Value = std::tuple<size_t, Memory *>;
-
-using CacheMap = std::map<Key, Value>;
 
 
 
