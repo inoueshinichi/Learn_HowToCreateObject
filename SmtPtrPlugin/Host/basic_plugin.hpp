@@ -18,6 +18,10 @@
 #include <sstream>
 #include <string>
 
+/**
+ * @brief Baseクラス
+ * 
+ */
 class BasicPlugin final : public Plugin
 {
 public:

@@ -96,7 +96,7 @@ public:
     using DllMap = std::unordered_map<std::string, DllInfo>; // static
     using PluginMap = std::map<std::intptr_t, PluginInfo>; // un-static(key: plugin-pointer)
 
-    // protected:
+// protected:
     PluginManager() { std::cout << "Constructor PluginManager" << std::endl; }
     virtual ~PluginManager() { std::cout << "Destructor ~PluginManager" << std::endl; }
 

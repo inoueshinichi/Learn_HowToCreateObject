@@ -12,7 +12,7 @@
 
 #include <defs.hpp>
 
-// Host
+// Plugin interface
 #include <plugin_host.hpp>
 
 #include <memory>
@@ -20,8 +20,14 @@
 class WinApiPluginManager;
 class WinMfcPluginManager;
 
+#if defined(__cplusplus)
 extern "C"
 {
+#endif
+
     PLUGIN_API std::shared_ptr<Plugin> CreateWinApiPlugin(WinApiPluginManager &manager);
     PLUGIN_API std::shared_ptr<Plugin> CreateWinMfcPlugin(WinMfcPluginManager &manager);
+
+#if defined(__cplusplus)
 }
+#endif

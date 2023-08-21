@@ -19,7 +19,10 @@
 
 #include <plugin_manager_host.hpp>
 
-
+/**
+ * @brief Basicクラス
+ * 
+ */
 class BasicPluginManager final : public PluginManager
 {
 public:
@@ -37,6 +40,10 @@ protected:
     }
 };
 
+/**
+ * @brief macOS専用クラス
+ * 
+ */
 class MacPluginManager final : public PluginManager
 {
 public:
@@ -55,6 +62,10 @@ protected:
     }
 };
 
+/**
+ * @brief Linux専用クラス
+ * 
+ */
 class LinuxPluginManager final : public PluginManager
 {
 public:
@@ -72,6 +83,10 @@ protected:
     }
 };
 
+/**
+ * @brief Windows専用クラス
+ * 
+ */
 class WinPluginManager final : public PluginManager
 {
 public:
@@ -89,6 +104,10 @@ protected:
     }
 };
 
+/**
+ * @brief Windows API専用クラス
+ * 
+ */
 class WinApiPluginManager final : public PluginManager
 {
 public:
@@ -106,6 +125,10 @@ protected:
     }
 };
 
+/**
+ * @brief Windows MFC専用クラス
+ * 
+ */
 class WinMfcPluginManager final : public PluginManager
 {
 public:

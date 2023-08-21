@@ -12,6 +12,7 @@
 
 class PluginManager;
 
+/* Interface */
 class Plugin
 {
 public:

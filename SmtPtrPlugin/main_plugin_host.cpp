@@ -18,12 +18,25 @@ auto main(int, char**) -> int
 {
     try
     {
+#if defined(_MSC_VER) // Windows
+
+        // nothing
+
+#elif defined(__APPLE__) && defined(__MACH__) // macOS
+
         MacPluginManager macPluginManager;
         auto macPlugin = macPluginManager.GetPlugin("./MacDllPlugin/libmac_plugind.so", "CreateMacPlugin");
         if (macPlugin)
         {
             macPlugin->About();
         }
+
+#else // Linux
+
+        // nothing
+
+#endif
+        
     }
     catch(const std::exception& e)
     {

@@ -1,7 +1,7 @@
 /**
  * @file plugin_tag.hpp
  * @author Shinichi Inoue (inoue.shinichi.1800@gmail.com)
- * @brief 
+ * @brief テンプレートの特殊化を用いてクラス名の文字列を取得する
  * @version 0.1
  * @date 2023-04-01
  * 
