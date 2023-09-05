@@ -32,6 +32,7 @@ class Memory
 {
 private:
     size_t _bytes; // 保持するメモリ量(バイト)
+    long long _required_bytes; // 実際に必要なメモリ量(バイト)
     void *_ptr;    // 先頭ポインタ
     bool _lock;    // ロック中か否か
     Memory *_prev; // 隣接する一つ前のMemoryオブジェクトへのポインタ
@@ -51,25 +52,8 @@ private:
         // nothing
     }
 
+    // friend class PoolAllocator;
 public:
-    Memory(size_t bytes) 
-        : _bytes(bytes)
-        , _ptr(nullptr)
-        , _lock(false)
-        , _prev(nullptr)
-        , _next(nullptr)
-    {}
-
-    Memory(size_t bytes, void *ptr)
-        : _bytes(bytes)
-        , _ptr(nullptr)
-        , _lock(false)
-        , _prev(nullptr)
-        , _next(nullptr)
-    {
-        _ptr = ptr;
-    }
-
     ~Memory()
     {
         if (!_ptr)
@@ -80,14 +64,35 @@ public:
         if (prev())
         {
             throw std::runtime_error(
-                "Trying to free memory which has a prev (allocated by another memory and split previously)."
-                );
+                "Trying to free memory which has a prev (allocated by another memory and split previously).");
         }
 
-        DEBUG_LOG("%s: %zu at %p\n", __func__, bytes(), _ptr);
+        DEBUG_LOG("%s: %zu (%zu) at %p\n", __func__, _bytes, _required_bytes, _ptr);
         dealloc();
     }
 
+
+    Memory(size_t bytes) 
+        : _bytes(bytes)
+        , _required_bytes(-1)
+        , _ptr(nullptr)
+        , _lock(false)
+        , _prev(nullptr)
+        , _next(nullptr)
+    {}
+
+    Memory(size_t bytes, void *ptr)
+        : _bytes(bytes)
+        , _required_bytes(-1)
+        , _ptr(nullptr)
+        , _lock(false)
+        , _prev(nullptr)
+        , _next(nullptr)
+    {
+        _ptr = ptr;
+    }
+
+// public:
     // disable copy constructor and assignment
     Memory(const Memory&) = delete;
     Memory& operator=(const Memory&) = delete;
@@ -97,6 +102,8 @@ public:
     Memory& operator=(Memory&& rhs) = default;;
 
     inline size_t bytes() const { return _bytes; }
+    inline void set_required_bytes(size_t required_bytes) { _required_bytes = required_bytes; }
+    inline size_t required_bytes() const { return _required_bytes < 0 ? _bytes : _required_bytes; }
     inline void *pointer() { return _ptr; }
     inline const void *const_pointer() const { return _ptr; }
     inline bool locked() const { return _lock; }
@@ -120,7 +127,7 @@ public:
 
         _ptr = ::malloc(_bytes);
 
-        DEBUG_LOG("%s: %zu at %p\n", __func__, bytes(), _ptr);
+        DEBUG_LOG("%s: %zu (%zu) at %p\n", __func__, _bytes, _required_bytes, _ptr);
     }
 
     // 新規でMemoryインスタンスが生成される(Factory関数)
@@ -148,14 +155,14 @@ public:
             return;
         }
 
-        if (from == this->_next)
+        if (_next == from)
         {
             this->merge_next(from);
             Memory::associate_consective(this, from->_next); // 両方向リンクリストからfromを除外
         }
-        else if (from == this->_prev)
+        else if (_prev == from)
         {
-            this->merge_prev(from);
+            this->merge_prev(_prev);
             Memory::associate_consective(from->_prev, this); // 両方向リンクリストからfromを除外
         }
 

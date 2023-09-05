@@ -88,11 +88,11 @@ void PoolAllocator::free(Memory *mem)
     /* キャッシュに戻す前に隣接するオブジェクトとマージする */
     bool is_small = bytes <= _SMALL_ALLOC;
     auto &cache_map = is_small ? _small_cache_map : _large_cache_map;
-
+    
     // try merge
-    Memory *next = mem->next();
+    Memory *next = mem->next(); // コピー
     mem->try_merge(next);
-    Memory *prev = mem->prev();
+    Memory *prev = mem->prev(); // コピー
     mem->try_merge(prev);
 
     // キャッシング済メモリをキャッシュマップから除外する
@@ -104,11 +104,50 @@ void PoolAllocator::free(Memory *mem)
 
     // logging
     DEBUG_LOG("cache_impl\n");
-    DEBUG_PRINT_CACHES(device_cache_map, is_small);
+    DEBUG_PRINT_CACHES(cache_map, is_small);
+
+    // CacheChainの管理
+    auto &cache_chain = is_small ? _small_cache_chain : _large_cache_chain;
+    auto iter = std::find(cache_chain.begin(), cache_chain.end(), mem);
+    
+    // CacheChainの先頭ポインタが消せるかチェック
+    if (iter != cache_chain.end())
+    {
+        bool is_lock = false;
+        Memory *mem = *iter;
+        Memory *head = *iter;
+        while (mem->next())
+        {
+            if (mem->locked())
+            {
+                is_lock = true;
+                break;
+            }
+            mem = mem->next();
+        }
+
+        if (!is_lock)
+        {
+            // 各Poolブロックの先頭メモリに該当するポインタを削除
+            cache_chain.erase(iter);
+            delete head;
+        }
+    }
+    else
+    {
+        // pool_blockの先頭メモリをマージした場合,
+        // CacheChainの先頭ポインタを入れ替える
+        iter = std::find(cache_chain.begin(), cache_chain.end(), prev);
+        if (iter != cache_chain.end())
+        {
+            *iter = mem;
+        }
+    }
+
 
     if (_delegate)
     {
-        _delegate->on_free(bytes, is_small : "small" : "large");
+        _delegate->on_free(bytes, is_small ? "small" : "large");
     }
 }
 
@@ -118,19 +157,22 @@ Memory *PoolAllocator::alloc(size_t orig_bytes)
     std::lock_guard<std::mutex> locker(_mtx);
 
     // 少なくとも1byteを確保する. これが効率がいい. (キャッシュマップ上では0byteとする)
-    size_t bytes = std::max(bytes, (size_t)1);
+    size_t required_bytes = std::max(orig_bytes, (size_t)1);
 
     // ラウンディングルールによるメモリ量の計算
-    bytes = round_size(bytes);
+    size_t round_bytes = round_size(required_bytes);
 
     // witch small or large?
-    bool is_small = (bytes <= /*1MB*/ _SMALL_ALLOC);
+    bool is_small = (round_bytes <= /*1MB*/ _SMALL_ALLOC);
 
     auto &cache_map = is_small ? _small_cache_map : _large_cache_map;
     DEBUG_PRINT_CACHES(cache_map, is_small);
 
+    // デバッグ用メモリ配置
+    auto &cache_chain = is_small ? _small_cache_chain : _large_cache_chain;
+
     Memory *mem = nullptr;
-    Key key = std::make_tuple(bytes, nullptr); // Keyを作成
+    Key key = std::make_tuple(round_bytes, nullptr); // Keyを作成
 
     // lower_boundで確保済メモリの中で使い回すメモリオブジェクトを特定する
     auto iter = cache_map.lower_bound(key);
@@ -140,27 +182,31 @@ Memory *PoolAllocator::alloc(size_t orig_bytes)
         /* Memoryを使い回す */
         mem = iter->second;
         cache_map.erase(iter); // キャシュマップは, 利用可能なメモリインスタンスが登録されている.
-        DEBUG_LOG("[Thread]%d : Found %zu\n", std::this_thread::get_id(), mem->bytes());
+        DEBUG_LOG("[Thread]%d : Found! %zu\n", std::this_thread::get_id(), mem->bytes());
     }
     else
     {
         /* 新規にUnlockなMmeoryを作成 */
 
         // 新規にmallocするメモリサイズ
-        size_t alloc_bytes = is_small ? _SMALL_ALLOC : bytes;
+        size_t alloc_bytes = is_small ? _SMALL_ALLOC : round_bytes;
         mem = this->make_memory(alloc_bytes);
-        DEBUG_LOG("[Thread]%d : Alloc : %zu\n", std::this_thread::get_id(), alloc_bytes);
+        DEBUG_LOG("[Thread]%d : First-alloc! : %zu bytes\n", std::this_thread::get_id(), alloc_bytes);
         alloc_retry(mem); // ここで実メモリが確保される
+
+        // デバッグ用メモリ配置
+        cache_chain.push_back(/* HeadMemoryPtr */mem);
     }
 
     /* 分割ルール : 確保したメモリサイズが大きすぎる場合、メモリを分割 */
     // キャッシュされたメモリの貸出(lower_bound)で取得したバイト数は, bytesと異なり, メモリ量が大きい.
-    if (mem->bytes() - bytes >= (is_small ? _ROUND_SMALL : _SMALL_ALLOC + 1))
+    if (mem->bytes() - round_bytes >= (is_small ? _ROUND_SMALL : _SMALL_ALLOC + 1))
     {
-        DEBUG_LOG("Split (%d): %zu at %zu\n", (int)is_small, mem->bytes(), bytes);
-        Memory *remaining = mem->divide(bytes);
+        DEBUG_LOG("Split (%d): %zu at %zu\n", (int)is_small, mem->bytes(), round_bytes);
+        Memory *remaining = mem->divide(round_bytes);
         cache_map[create_key_by_memory(remaining)] = remaining; // ここでキャシュマップに登録
     }
+
     DEBUG_PRINT_CACHES(cache_map, is_small);
 
 

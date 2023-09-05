@@ -24,17 +24,19 @@
 #include <tuple>
 #include <vector>
 #include <memory> // std::unique_ptr
+#include <list>
 
 #include <Memory/memory.hpp>
 #include <Delegate/debug_delegate.hpp>
 
+// 1MB : 104,857バイト
 /**
  * @brief メモリプールの実装
- * 
+ *
  * 1. ラウンディングルール (512B*k if small(<1MB) or 128KB*k if large(>=1MB))
  * 2. キャッシュマップ(small or large) ※ 変数の型毎のキャッシングマップは, 今回やっていない.
  * 3. 分割ルール (the rest of memory >= 512B if small, the rest of memory >= 1MB if large)
- * 4. メモリ(インスタンス)の貸出 : 貸出に伴う新規確保 or キャッシュマップからの使い回し, 余分なメモリは分割ルールで新規メモリインスタンス作成&キャッシュマップに登録
+ * 4. メモリ(インスタンス)の貸出 : 貸出に伴う新規確保 or キャッシュマップからの使い回し, 余分なメモリは分割ルールで新規メモリインスタンス作成 & キャッシュマップに登録
  * 5. メモリ(インスタンス)の回収 : 回収時に隣接ノードとマージできないかチェックする. キャッシュマップの登録変更も更新する.
  * 6. 各機能チェックのために, MemoryDelegateで動作確認.
  */
@@ -45,6 +47,9 @@ public:
     using Key = std::tuple<size_t, Memory *>; // 同じbytesで異なるMemoryインスタンスが存在するのを区別する必要がある.
     using Value = Memory *;
     using CacheMap = std::map<Key, Value>;
+
+    using HeadMemoryPtr = Memory *;
+    using MemCacheChain = std::vector<HeadMemoryPtr>;
     
 private:
     // メモリ切り出しの際のラウンディングルール
@@ -54,26 +59,19 @@ private:
 
     CacheMap _small_cache_map; // 小型メモリ量用キャッシュマップ
     CacheMap _large_cache_map; // 大型メモリ量用キャッシュマップ
-    int _small_mem_counter; // 小型メモリ数 
-    int _large_mem_counter; // 大型メモリ数
-    
+    MemCacheChain _small_cache_chain; // 小型メモリの先頭ブロック
+    MemCacheChain _large_cache_chain; // 大型メモリの先頭ブロック
+
+    std::mutex _mtx;
 
     // hook (delegate)
     std::unique_ptr<MemoryDebugProtocol> _delegate;
-
-public:
-    /* funcitons */
-    PoolAllocator() : _delegate(new MemoryDelegate("PoolAllocator")) {}
-    ~PoolAllocator() {}
 
     // ラウンディングルールによる確保するメモリ量の計算
     size_t round_size(size_t bytes);
 
     // キャッシュ済メモリのキャッシュマップからの削除
-    void try_erase_cache(CacheMap& cache_map, Memory *mem);
-
-    // メモリ(インスタンス)の貸出
-    Memory *alloc(size_t orig_bytes);
+    void try_erase_cache(CacheMap &cache_map, Memory *mem);
 
     // メモリ貸出(std::bac_alloc例外対応)
     void alloc_retry(Memory *mem)
@@ -82,7 +80,7 @@ public:
             メモリ確保を試みる. もし例外(std::bad_alloc)が発生したら
             利用できるすべてのメモリを解放して, 再確保を試みる.
         */
-        try 
+        try
         {
             mem->alloc(); // Memoryインスタンスのbytesサイズと同じ数だけを確保
         }
@@ -117,6 +115,26 @@ public:
             }
         }
     }
+
+    // メモリクラスのインスタンスの確保
+    Memory *make_memory(size_t alloc_bytes/* round_bytes */)
+    {
+        return new Memory(alloc_bytes);
+    }
+
+public:
+    /* funcitons */
+    PoolAllocator() 
+        : _delegate(new MemoryDelegate("PoolAllocator"))
+    {}
+
+    ~PoolAllocator() {}
+
+    MemCacheChain &get_small_cache_chain() { return _small_cache_chain; }
+    MemCacheChain &get_large_cache_chain() { return _large_cache_chain; }
+
+    // メモリ(インスタンス)の貸出
+    Memory *alloc(size_t orig_bytes);
 
     // キャッシュ済メモリの解放(キャッシュマップに戻す)
     void free(Memory *mem);
@@ -290,20 +308,105 @@ public:
     std::vector<int> get_used_memory_counts()
     {
         std::vector<int> ret(2);
-        ret.at(0) = _small_mem_counter;
-        ret.at(1) = _large_mem_counter;
+        
+        // 先頭ブロックからリストを操作(O(N))
+        int small_blocks = 0;
+        for (auto &head : _small_cache_chain)
+        {
+            Memory *mem = head;
+            while (mem->next())
+            {
+                small_blocks++;
+                mem = mem->next();
+            }
+            small_blocks++;
+        }
+
+        int large_blocks = 0;
+        for (auto &head : _large_cache_chain)
+        {
+            Memory *mem = head;
+            while (mem->next())
+            {
+                large_blocks++;
+                mem = mem->next();
+            }
+            large_blocks++;
+        }
+
+        ret.at(0) = small_blocks;
+        ret.at(1) = large_blocks;
+
         return ret;
     }
 
-    // メモリクラスのインスタンスの確保
-    Memory *make_memory(size_t alloc_bytes)
+    void show_status_caching()
     {
-        return new Memory(alloc_bytes);
+        std::printf("====== Small blocks ======\n");
+        std::printf("| memory | status | round bytes | required bytes | fragment bytes |\n");
+        std::printf("-------------------------------------------------------------------\n");
+
+        int index = 0;
+        for (auto &head : _small_cache_chain)
+        {
+            index = 1;
+            Memory *mem = head;
+            bool is_head = true;
+            while (mem->next())
+            {
+                std::printf("| %s Mem%d | %s | %lu | %lu | %lu |\n",
+                            is_head ? "*" : "↑",
+                            index,
+                            mem->locked() ? "lock" : "unlock",
+                            mem->bytes(),
+                            mem->required_bytes(),
+                            mem->bytes() - mem->required_bytes());
+
+                mem = mem->next();
+                is_head = false;
+                index++;
+            }
+
+            std::printf("| %s Mem%d | %s | %lu | %lu | %lu |\n",
+                        is_head ? "*" : "↑",
+                        mem->prev() ? -1 : 1,
+                        mem->locked() ? "lock" : "unlock",
+                        mem->bytes(),
+                        mem->required_bytes(),
+                        mem->bytes() - mem->required_bytes());            
+        }
+        std::printf("====== Large blocks ======\n");
+        std::printf("| memory | status | round bytes | requred bytes | fragment bytes | \n");
+        std::printf("-------------------------------------------------------------------\n");
+
+        for (auto &head : _large_cache_chain)
+        {
+            index = 1;
+            Memory *mem = head;
+            bool is_head = true;
+            while (mem->next())
+            {
+                std::printf("| %s Mem%d | %s | %lu | %lu | %lu |\n",
+                            is_head ? "*" : "↑",
+                            index,
+                            mem->locked() ? "lock" : "unlock",
+                            mem->bytes(),
+                            mem->required_bytes(),
+                            mem->bytes() - mem->required_bytes());
+
+                mem = mem->next();
+                is_head = false;
+                index++;
+            }
+
+            std::printf("| %s Mem%d | %s | %lu | %lu | %lu |\n",
+                        is_head ? "*" : "↑",
+                        mem->prev() ? -1 : 1,
+                        mem->locked() ? "lock" : "unlock",
+                        mem->bytes(),
+                        mem->required_bytes(),
+                        mem->bytes() - mem->required_bytes());
+        }
     }
-
-    
-
-protected:
-    std::mutex _mtx;
 };
 
