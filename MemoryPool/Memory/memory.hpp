@@ -166,6 +166,16 @@ public:
         from->disable(); 
     }
 
+    // アクティブバイト数
+    size_t active_bytes()
+    {
+        if (!_ptr || _next || _prev) {
+            return 0;
+        }
+        /* 隣接ノードがなく, まだメモリを確保していない未確保領域のバイト数 */
+        return _bytes;
+    }
+
     // 両方向リンクリストの参照先を設定する
     static void associate_consective(Memory *left, Memory *right)
     {
