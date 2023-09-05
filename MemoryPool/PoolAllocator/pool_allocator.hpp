@@ -23,6 +23,7 @@
 #include <utility> // std::make_tuple
 #include <tuple>
 #include <vector>
+#include <memory> // std::unique_ptr
 
 #include <Memory/memory.hpp>
 #include <Delegate/debug_delegate.hpp>
@@ -33,8 +34,9 @@
  * 1. ラウンディングルール (512B*k if small(<1MB) or 128KB*k if large(>=1MB))
  * 2. キャッシュマップ(small or large) ※ 変数の型毎のキャッシングマップは, 今回やっていない.
  * 3. 分割ルール (the rest of memory >= 512B if small, the rest of memory >= 1MB if large)
- * 4. メモリ(インスタンス)の貸出 : 貸出に伴う新規確保 or キャッシュマップからの使い回し
+ * 4. メモリ(インスタンス)の貸出 : 貸出に伴う新規確保 or キャッシュマップからの使い回し, 余分なメモリは分割ルールで新規メモリインスタンス作成&キャッシュマップに登録
  * 5. メモリ(インスタンス)の回収 : 回収時に隣接ノードとマージできないかチェックする. キャッシュマップの登録変更も更新する.
+ * 6. 各機能チェックのために, MemoryDelegateで動作確認.
  */
 
 class PoolAllocator
@@ -57,10 +59,12 @@ private:
     
 
     // hook (delegate)
-    std::function<void(void)> _delegate = nullptr;
+    std::unique_ptr<MemoryDebugProtocol> _delegate;
 
 public:
     /* funcitons */
+    PoolAllocator() : _delegate(new MemoryDelegate("PoolAllocator")) {}
+    ~PoolAllocator() {}
 
     // ラウンディングルールによる確保するメモリ量の計算
     size_t round_size(size_t bytes);
